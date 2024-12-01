@@ -6,6 +6,7 @@ use crate::DescribeType;
 use crate::Enum;
 use crate::FromReflect;
 use crate::Reflect;
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
 #[test]
 fn enum_value() {
@@ -55,6 +56,10 @@ fn enum_value() {
 
 #[test]
 fn static_enum() {
+    fixed_type_id! {
+        tests::enum_::static_enum::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     enum Foo {
@@ -124,6 +129,10 @@ fn static_enum() {
 
 #[test]
 fn patching() {
+    fixed_type_id! {
+        Foo;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     enum Foo {
@@ -200,6 +209,10 @@ fn patching() {
 
 #[test]
 fn static_tuple_enum() {
+    fixed_type_id! {
+        tests::enum_::static_tuple_enum::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     enum Foo {
@@ -271,6 +284,10 @@ fn static_tuple_enum() {
 
 #[test]
 fn unit_variant() {
+    fixed_type_id! {
+        tests::enum_::unit_variant::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     enum Foo {
@@ -396,6 +413,11 @@ fn option() {
 
 #[test]
 fn from_reflect_with_value() {
+    fixed_type_id! {
+        tests::enum_::from_reflect_with_value::Foo;
+        tests::enum_::from_reflect_with_value::Number;
+    }
+
     #[derive(Debug, Clone, Reflect)]
     #[reflect(crate_name(crate))]
     pub enum Foo {
@@ -424,6 +446,10 @@ fn from_reflect_with_value() {
 
 #[test]
 fn default_value_for_enum_variant_type() {
+    fixed_type_id! {
+        tests::enum_::default_value_for_enum_variant_type::Foo;
+    }
+
     #[derive(Debug, Clone, Reflect, PartialEq)]
     #[reflect(crate_name(crate))]
     pub enum Foo {

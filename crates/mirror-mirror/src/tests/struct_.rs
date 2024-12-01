@@ -15,6 +15,12 @@ use crate::Reflect;
 use crate::Struct;
 use crate::Value;
 
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+fixed_type_id! {
+    tests::struct_::Foo;
+}
+
 #[derive(Reflect, Default, Clone, Eq, PartialEq, Debug)]
 #[reflect(crate_name(crate))]
 struct Foo {
@@ -135,6 +141,12 @@ fn box_dyn_reflect_as_reflect() {
 
 #[test]
 fn deeply_nested() {
+    fixed_type_id! {
+        tests::struct_::deeply_nested::Foo;
+        tests::struct_::deeply_nested::Bar;
+        tests::struct_::deeply_nested::Baz;
+    }
+
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
     struct Foo {
@@ -171,6 +183,11 @@ fn deeply_nested() {
 
 #[test]
 fn from_reflect_with_value() {
+    fixed_type_id! {
+        tests::struct_::from_reflect_with_value::Foo;
+        tests::struct_::from_reflect_with_value::Number;
+    }
+
     #[derive(Debug, Clone, Reflect, Default)]
     #[reflect(crate_name(crate))]
     pub struct Foo {
@@ -193,6 +210,11 @@ fn from_reflect_with_value() {
 
 #[test]
 fn accessing_docs_in_type_info() {
+    fixed_type_id! {
+        tests::struct_::accessing_docs_in_type_info::Foo;
+        tests::struct_::accessing_docs_in_type_info::Inner;
+    }
+
     /// Here are the docs.
     ///
     /// Foo bar.
@@ -233,6 +255,11 @@ fn accessing_docs_in_type_info() {
 // order
 #[test]
 fn consistent_iteration_order_of_struct_fields() {
+    fixed_type_id! {
+        tests::struct_::consistent_iteration_order_of_struct_fields::Outer;
+        tests::struct_::consistent_iteration_order_of_struct_fields::Inner;
+    }
+
     #[derive(Reflect, Debug, Clone)]
     #[reflect(crate_name(crate))]
     struct Outer {
@@ -275,6 +302,11 @@ fn consistent_iteration_order_of_struct_fields() {
 
 #[test]
 fn consistent_iteration_order_of_struct_variant_fields() {
+    fixed_type_id! {
+        tests::struct_::consistent_iteration_order_of_struct_variant_fields::Outer;
+        tests::struct_::consistent_iteration_order_of_struct_variant_fields::Inner;
+    }
+
     #[derive(Reflect, Debug, Clone)]
     #[reflect(crate_name(crate))]
     struct Outer {

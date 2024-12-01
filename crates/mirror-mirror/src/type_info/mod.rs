@@ -1,5 +1,6 @@
-use core::any::type_name;
+// use core::any::type_name;
 use core::iter::Peekable;
+use fixed_type_id::{type_id, type_name, FixedId, FixedTypeId};
 
 use alloc::borrow::Cow;
 use alloc::boxed::Box;
@@ -35,12 +36,14 @@ pub use self::simple_type_name::SimpleTypeName;
 /// Trait for accessing type information.
 ///
 /// Will be implemented by `#[derive(Reflect)]`.
-pub trait DescribeType: 'static {
+pub trait DescribeType: 'static + FixedTypeId {
     /// Creates a type descriptor for the current type.
     ///
     /// On targets with the standard library, it's done only once per process, then subsequent
     /// accesses are "free" because the result is cached. On non-std targets, the type descriptor
     /// is recomputed and reallocated on each call.
+    ///
+    /// TODO: I don't think it should handle type info cache internally. But just leave it as is for now.
     fn type_descriptor() -> Cow<'static, TypeDescriptor> {
         #[cfg(feature = "std")]
         {
@@ -51,10 +54,10 @@ pub trait DescribeType: 'static {
             // a map required for generic types to have different type descriptors such as
             // `Vec<i32>` and `Vec<bool>`
             static INFO: OnceBox<
-                RwLock<HashMap<TypeId, &'static TypeDescriptor, ahash::RandomState>>,
+                RwLock<HashMap<FixedId, &'static TypeDescriptor, ahash::RandomState>>,
             > = OnceBox::new();
 
-            let type_id = TypeId::of::<Self>();
+            let type_id = type_id::<Self>();
 
             let lock = INFO.get_or_init(|| {
                 Box::from(RwLock::new(HashMap::with_hasher(

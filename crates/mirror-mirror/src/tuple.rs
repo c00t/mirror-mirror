@@ -4,6 +4,7 @@ use core::any::Any;
 use core::fmt;
 use core::fmt::Debug;
 use core::iter::FusedIterator;
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
 use crate::iter::ValueIterMut;
 use crate::type_info::graph::NodeId;
@@ -95,6 +96,10 @@ impl DescribeType for TupleValue {
             OpaqueNode::new::<Self>(Default::default(), graph)
         })
     }
+}
+
+fixed_type_id! {
+    mirror_mirror::tuple::TupleValue
 }
 
 impl Reflect for TupleValue {

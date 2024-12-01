@@ -2,6 +2,8 @@ use core::any::type_name;
 use core::hash::Hash;
 
 use alloc::collections::BTreeMap;
+use fixed_type_id::fstr_to_str;
+use fixed_type_id::ConstTypeName;
 
 use crate::key_path;
 use crate::key_path::GetPath;
@@ -12,8 +14,14 @@ use crate::FromReflect;
 use crate::Reflect;
 use crate::Value;
 
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
 #[test]
 fn struct_() {
+    fixed_type_id! {
+        mirror_mirror::tests::type_info::struct_::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
     struct Foo {
@@ -67,6 +75,10 @@ fn struct_() {
 
 #[test]
 fn enum_() {
+    fixed_type_id! {
+        tests::type_info::enum_::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
     enum Foo {
@@ -78,6 +90,10 @@ fn enum_() {
 
 #[test]
 fn complex_meta_type() {
+    fixed_type_id! {
+        tests::type_info::complex_meta_type::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate), meta(a = Foo(1337)))]
     struct Foo(i32);
@@ -90,6 +106,10 @@ fn complex_meta_type() {
 
 #[test]
 fn type_to_root() {
+    fixed_type_id! {
+        mirror_mirror::tests::type_info::type_to_root::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate), meta(a = Foo(1337)))]
     struct Foo(i32);
@@ -111,6 +131,11 @@ fn type_to_root() {
 
 #[test]
 fn two_types() {
+    fixed_type_id! {
+        tests::type_info::two_types::Foo;
+        tests::type_info::two_types::Bar;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Foo(i32);
@@ -146,6 +171,24 @@ fn two_types() {
 
 #[test]
 fn how_to_handle_generics() {
+    impl<T> FixedTypeId for Foo<T>
+    where
+        T: Reflect + FromReflect + DescribeType,
+    {
+        const TYPE_NAME: &'static str = fstr_to_str(&Self::TYPE_NAME_FSTR);
+    }
+
+    impl<T> ConstTypeName for Foo<T>
+    where
+        T: Reflect + FromReflect + DescribeType,
+    {
+        const RAW_SLICE: &'static [&'static str] = &[
+            "tests::type_info::how_to_handle_generics::Foo<",
+            T::TYPE_NAME,
+            ">",
+        ];
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate), opt_out(Debug, Clone))]
     struct Foo<T>(T)
@@ -179,6 +222,10 @@ fn how_to_handle_generics() {
 
 #[test]
 fn opaque_default() {
+    fixed_type_id! {
+        tests::type_info::opaque_default::Opaque;
+    }
+
     struct Opaque(i32);
 
     impl DescribeType for Opaque {
@@ -205,6 +252,11 @@ fn opaque_default() {
 
 #[test]
 fn basic_eq() {
+    fixed_type_id! {
+        tests::type_info::basic_eq::Foo;
+        tests::type_info::basic_eq::Bar;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Foo(i32);
@@ -235,6 +287,12 @@ fn basic_eq() {
 fn basic_hash() {
     use std::collections::hash_map::RandomState;
     use std::hash::{BuildHasher, Hasher};
+
+    fixed_type_id! {
+        tests::type_info::basic_hash::Foo;
+        tests::type_info::basic_hash::Bar;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Foo {
@@ -273,6 +331,12 @@ fn basic_hash() {
 
 #[test]
 fn has_default_value() {
+    fixed_type_id! {
+        tests::type_info::has_default_value::A;
+        tests::type_info::has_default_value::B;
+        tests::type_info::has_default_value::C;
+    }
+
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
     struct A {

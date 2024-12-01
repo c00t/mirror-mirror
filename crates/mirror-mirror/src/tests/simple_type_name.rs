@@ -2,12 +2,25 @@ use alloc::collections::BTreeMap;
 
 use crate::type_info::SimpleTypeName;
 
-fn simple_type_name<T>() -> String {
+use fixed_type_id::{
+    fixed_type_id, fstr_to_str, usize_to_str, ConstTypeName, FixedId, FixedTypeId, FixedVersion,
+};
+
+fn simple_type_name<T: FixedTypeId>() -> String {
     SimpleTypeName::new_from_type::<T>().to_string()
 }
 
 #[test]
 fn works() {
+    impl<'a, const N: usize> FixedTypeId for Foo<'a, N> {
+        const TYPE_NAME: &'static str = fstr_to_str(&Self::TYPE_NAME_FSTR);
+    }
+
+    impl<'a, const N: usize> ConstTypeName for Foo<'a, N> {
+        const RAW_SLICE: &'static [&'static str] =
+            &["tests::simple_type_name::works::Foo<", usize_to_str(N), ">"];
+    }
+
     #[allow(dead_code)]
     struct Foo<'a, const N: usize>(&'a ());
 
@@ -50,6 +63,10 @@ fn type_inside_unnamed_const() {
 
     const _: () = {
         struct Bar<T>(T);
+
+        fixed_type_id! {
+            tests::simple_type_name::type_inside_unnamed_const::Bar<std::string::String>;
+        }
 
         impl A for Foo {
             type T = Bar<String>;

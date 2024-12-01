@@ -6,6 +6,8 @@ use crate::GetField;
 use crate::Reflect;
 use crate::TupleStruct;
 
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
 #[test]
 fn tuple_value() {
     let mut tuple = TupleStructValue::new().with_field(1_i32).with_field(false);
@@ -20,6 +22,10 @@ fn tuple_value() {
 
 #[test]
 fn static_tuple() {
+    fixed_type_id! {
+        tests::tuple_struct::static_tuple::A;
+    }
+
     #[derive(Reflect, Default, Clone, Eq, PartialEq, Debug)]
     #[reflect(crate_name(crate))]
     struct A(i32, bool);
@@ -47,6 +53,11 @@ fn static_tuple() {
 
 #[test]
 fn from_reflect_with_value() {
+    fixed_type_id! {
+        tests::tuple_struct::from_reflect_with_value::Foo;
+        tests::tuple_struct::from_reflect_with_value::Number;
+    }
+
     #[derive(Debug, Clone, Reflect, Default)]
     #[reflect(crate_name(crate))]
     pub struct Foo(Number);

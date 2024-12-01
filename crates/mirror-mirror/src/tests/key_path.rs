@@ -7,9 +7,17 @@ use crate::type_info::TypeAtPath;
 use crate::DescribeType;
 use crate::Reflect;
 
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
 #[test]
 #[allow(clippy::bool_assert_comparison)]
 fn works() {
+    fixed_type_id! {
+        tests::key_path::works::A;
+        tests::key_path::works::B;
+        tests::key_path::works::C;
+    }
+
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
     struct A {
@@ -69,6 +77,12 @@ fn display() {
 
 #[test]
 fn query_type_info_struct() {
+    fixed_type_id! {
+        tests::key_path::query_type_info_struct::User;
+        tests::key_path::query_type_info_struct::Company;
+        tests::key_path::query_type_info_struct::Country;
+    }
+
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
     struct User {
@@ -109,6 +123,10 @@ fn query_type_info_struct() {
 
 #[test]
 fn query_type_info_enum() {
+    fixed_type_id! {
+        tests::key_path::query_type_info_enum::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
     enum Foo {
@@ -143,6 +161,10 @@ fn query_type_info_enum() {
 
 #[test]
 fn select_tuple_field() {
+    fixed_type_id! {
+        tests::key_path::select_tuple_field::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
     struct Foo(i32, bool);

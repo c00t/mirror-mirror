@@ -7,10 +7,19 @@
 //! ```
 //! use mirror_mirror::{Reflect, Struct};
 //!
-//! #[derive(Reflect, Clone, Debug)]
-//! struct Foo {
-//!     x: i32,
+//! # mod some_module_name {
+//! use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+//! # use mirror_mirror::{Reflect, Struct};
+//!
+//! fixed_type_id! {
+//!     doc::some_module_name::Foo;
 //! }
+//! #[derive(Reflect, Clone, Debug)]
+//! pub struct Foo {
+//!     pub x: i32,
+//! }
+//! # }
+//! # use some_module_name::Foo;
 //!
 //! let mut foo = Foo { x: 42 };
 //!
@@ -64,12 +73,19 @@
 //!
 //!     Some(())
 //! }
-//!
+//! # mod some_module_name {
+//! # use mirror_mirror::{Reflect, Struct, ReflectMut, ScalarMut, enum_::VariantFieldMut};
+//! use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+//! fixed_type_id! {
+//!     doc::some_module_name::Bar;
+//! }
 //! #[derive(Reflect, Clone, Debug)]
-//! enum Bar {
+//! pub enum Bar {
 //!     X { x: i32 },
 //!     Y(String),
 //! }
+//! # }
+//! # use some_module_name::Bar;
 //!
 //! # (|| {
 //! let mut bar = Bar::X { x: 42 };
@@ -83,6 +99,7 @@
 //! assert!(matches!(bar, Bar::Y(s) if s == "foobar"));
 //! # Some(())
 //! # })().unwrap();
+//!
 //! ```
 //!
 //! ## Query value and type information using key paths
@@ -94,22 +111,33 @@
 //!     key_path::{GetPath, GetTypePath, field},
 //!     type_info::{DescribeType, ScalarType},
 //! };
+//! # mod some_module_name {
+//! use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+//! # use mirror_mirror::{Reflect, key_path, key_path::{GetPath, GetTypePath, field}, type_info::{DescribeType, ScalarType}};
+//!
+//! fixed_type_id! {
+//!     doc::some_module_name::User;
+//!     doc::some_module_name::Company;
+//!     doc::some_module_name::Country;
+//! }
 //!
 //! // Some complex nested data type.
 //! #[derive(Reflect, Clone, Debug)]
-//! struct User {
-//!     employer: Option<Company>,
+//! pub struct User {
+//!     pub employer: Option<Company>,
 //! }
 //!
 //! #[derive(Reflect, Clone, Debug)]
-//! struct Company {
-//!     countries: Vec<Country>,
+//! pub struct Company {
+//!     pub countries: Vec<Country>,
 //! }
 //!
 //! #[derive(Reflect, Clone, Debug)]
-//! struct Country {
-//!     name: String
+//! pub struct Country {
+//!     pub name: String
 //! }
+//! # }
+//! # use some_module_name::{User, Company, Country};
 //!
 //! let user = User {
 //!     employer: Some(Company {
@@ -144,9 +172,18 @@
 //!
 //! ```
 //! use mirror_mirror::{Reflect, Value, FromReflect};
+//! # mod some_module_name {
+//! use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+//! # use mirror_mirror::{Reflect, Value, FromReflect};
 //!
+//! fixed_type_id! {
+//!     doc::some_module_name::Foo;
+//! }
 //! #[derive(Reflect, Clone, Debug)]
-//! struct Foo(Vec<i32>);
+//! pub struct Foo(pub Vec<i32>);
+//!
+//! # }
+//! # use some_module_name::Foo;
 //!
 //! # (|| {
 //! let foo = Foo(vec![1, 2, 3]);

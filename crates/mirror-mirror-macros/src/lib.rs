@@ -55,7 +55,13 @@ mod derive_reflect;
 /// On structs `#[derive(Reflect)]` will also derive `Struct` and `FromReflect`.
 ///
 /// ```
+/// # mod some_module_name {
 /// use mirror_mirror::Reflect;
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+/// }
 ///
 /// #[derive(Reflect, Clone, Debug)]
 /// struct Foo {
@@ -63,6 +69,7 @@ mod derive_reflect;
 ///     b: bool,
 ///     c: String,
 /// }
+/// # }
 /// ```
 ///
 /// Unit structs are treated as tuple structs with no fields.
@@ -72,10 +79,17 @@ mod derive_reflect;
 /// On tuple structs `#[derive(Reflect)]` will also derive `TupleStruct` and `FromReflect`.
 ///
 /// ```
+/// # mod some_module_name {
 /// use mirror_mirror::Reflect;
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+/// }
 ///
 /// #[derive(Reflect, Clone, Debug)]
 /// struct Foo(i32, bool, String);
+/// # }
 /// ```
 ///
 /// # Enums
@@ -83,7 +97,13 @@ mod derive_reflect;
 /// On enums `#[derive(Reflect)]` will also derive `Enum` and `FromReflect`.
 ///
 /// ```
+/// # mod some_module_name {
 /// use mirror_mirror::Reflect;
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+/// }
 ///
 /// #[derive(Reflect, Clone, Debug)]
 /// enum Foo {
@@ -91,6 +111,7 @@ mod derive_reflect;
 ///     B { b: bool },
 ///     C,
 /// }
+/// # }
 /// ```
 ///
 /// # Options
@@ -101,11 +122,18 @@ mod derive_reflect;
 /// requirements with `#[reflect(opt_out(Clone, Debug))]`
 ///
 /// ```
+/// # mod some_module_name {
 /// use mirror_mirror::Reflect;
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+/// }
 ///
 /// #[derive(Reflect)]
 /// #[reflect(opt_out(Debug, Clone))]
 /// struct Foo(i32);
+/// # }
 /// ```
 ///
 /// This changes the implementation of `Reflect::clone_reflect` and `Reflect::debug` to something
@@ -114,17 +142,24 @@ mod derive_reflect;
 /// You can also opt-out of deriving `FromReflect` so you can provide you own implementation:
 ///
 /// ```
+/// # mod some_module_name {
 /// use mirror_mirror::{Reflect, FromReflect};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
 ///
 /// #[derive(Reflect, Debug, Clone)]
 /// #[reflect(opt_out(FromReflect))]
 /// struct Foo(i32);
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+/// }
 ///
 /// impl FromReflect for Foo {
 ///     fn from_reflect(value: &dyn Reflect) -> Option<Self> {
 ///         Some(Self(*value.downcast_ref::<i32>()?))
 ///     }
 /// }
+/// # }
 /// ```
 ///
 /// ## `skip`
@@ -134,6 +169,17 @@ mod derive_reflect;
 ///
 /// ```
 /// use mirror_mirror::{Reflect, FromReflect};
+///
+/// # mod some_module_name {
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+/// # use mirror_mirror::{Reflect, FromReflect};
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+///     doc::some_module_name::Bar;
+///     doc::some_module_name::Baz;
+///     doc::some_module_name::NotReflect;
+/// }
 ///
 /// #[derive(Reflect, Debug, Clone)]
 /// struct Foo {
@@ -160,6 +206,8 @@ mod derive_reflect;
 /// // A type that isn't compatible with reflection
 /// #[derive(Debug, Clone, Default)]
 /// struct NotReflect;
+///
+/// # }
 /// ```
 ///
 /// ## `from_reflect_with`
@@ -168,7 +216,13 @@ mod derive_reflect;
 /// conversion:
 ///
 /// ```
+/// # mod some_module_name {
 /// use mirror_mirror::{Reflect, FromReflect};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+/// }
 ///
 /// #[derive(Reflect, Debug, Clone)]
 /// struct Foo {
@@ -179,6 +233,7 @@ mod derive_reflect;
 /// fn n_from_reflect(field: &dyn Reflect) -> Option<i32> {
 ///     Some(*field.downcast_ref::<i32>()?)
 /// }
+/// # }
 /// ```
 ///
 /// ## `meta`
@@ -194,6 +249,20 @@ mod derive_reflect;
 ///     type_info::{GetMeta, DescribeType},
 /// };
 ///
+/// # mod some_module_name {
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+/// # use mirror_mirror::{
+/// #     Reflect,
+/// #     key_path,
+/// #     key_path::GetTypePath,
+/// #     FromReflect,
+/// #     type_info::{GetMeta, DescribeType},
+/// # };
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+/// }
+///
 /// #[derive(Reflect, Debug, Clone)]
 /// #[reflect(meta(
 ///     // a comma separated list of `key = value` pairs.
@@ -202,10 +271,12 @@ mod derive_reflect;
 ///     // implements `Reflect`
 ///     item_key = "item value",
 /// ))]
-/// struct Foo {
+/// pub struct Foo {
 ///     #[reflect(meta(field_key = 1337))]
 ///     n: i32,
 /// }
+/// # }
+/// # use some_module_name::Foo;
 ///
 /// // Access the metadata through the type information
 /// let type_info = <Foo as DescribeType>::type_descriptor();
@@ -233,13 +304,20 @@ mod derive_reflect;
 /// using a library that re-exports `mirror_mirror`'s derive macro:
 ///
 /// ```
+/// # mod some_module_name {
 /// # use mirror_mirror as some_library;
 /// use some_library::Reflect;
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
+///
+/// fixed_type_id! {
+///     doc::some_module_name::Foo;
+/// }
 ///
 /// #[derive(Reflect, Debug, Clone)]
 /// #[reflect(crate_name(some_library))]
 /// struct Foo {
 ///     n: i32,
+/// }
 /// }
 /// ```
 ///

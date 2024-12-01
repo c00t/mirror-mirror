@@ -13,6 +13,13 @@ mod tuple_struct;
 mod type_info;
 mod value;
 
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+fixed_type_id! {
+    tests::DebugOptOut;
+    tests::ContainsBoxed;
+}
+
 #[derive(Reflect)]
 #[reflect(crate_name(crate), opt_out(Debug, Clone))]
 #[allow(dead_code)]
@@ -29,6 +36,15 @@ mod complex_types {
     use alloc::collections::BTreeMap;
 
     use crate::Reflect;
+
+    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+    fixed_type_id! {
+        tests::complex_types::A;
+        tests::complex_types::B;
+        tests::complex_types::C;
+        tests::complex_types::D;
+    }
 
     #[derive(Reflect, Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
     #[reflect(crate_name(crate))]
@@ -58,6 +74,15 @@ mod skip {
     #![allow(dead_code)]
 
     use super::*;
+
+    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+    fixed_type_id! {
+        tests::skip::TestStruct;
+        tests::skip::TestTupleStruct;
+        tests::skip::TestEnum;
+        tests::skip::NotReflect;
+    }
 
     #[derive(Reflect, Debug, Clone)]
     #[reflect(crate_name(crate))]
@@ -98,6 +123,12 @@ mod option_f32 {
 
     use super::*;
 
+    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+    fixed_type_id! {
+        tests::option_f32::Foo;
+    }
+
     #[derive(Debug, Clone, Reflect)]
     #[reflect(crate_name(crate))]
     struct Foo {
@@ -114,6 +145,11 @@ mod derive_foreign {
     use crate::DescribeType;
     use crate::FromReflect;
 
+    use fixed_type_id::{
+        fixed_type_id, fstr_to_str, implement_wrapper_fixed_type_id, ConstTypeName, FixedId,
+        FixedTypeId, FixedVersion,
+    };
+
     enum Foo<A, B>
     where
         A: FromReflect + DescribeType,
@@ -122,6 +158,29 @@ mod derive_foreign {
         Struct { a: A },
         Tuple(B),
         Unit,
+    }
+
+    // too complex, implement it manually
+    impl<A, B> FixedTypeId for Foo<A, B>
+    where
+        A: FromReflect + DescribeType,
+        B: FromReflect + DescribeType,
+    {
+        const TYPE_NAME: &'static str = fstr_to_str(&Self::TYPE_NAME_FSTR);
+    }
+
+    impl<A, B> ConstTypeName for Foo<A, B>
+    where
+        A: FromReflect + DescribeType,
+        B: FromReflect + DescribeType,
+    {
+        const RAW_SLICE: &'static [&'static str] = &[
+            "tests::derive_foreign::Foo<",
+            A::TYPE_NAME,
+            ", ",
+            B::TYPE_NAME,
+            ">",
+        ];
     }
 
     __private_derive_reflect_foreign! {
@@ -146,6 +205,29 @@ mod derive_foreign {
         b: B,
     }
 
+    // too complex, implement it manually
+    impl<A, B> FixedTypeId for Bar<A, B>
+    where
+        A: FromReflect + DescribeType,
+        B: FromReflect + DescribeType,
+    {
+        const TYPE_NAME: &'static str = fstr_to_str(&Self::TYPE_NAME_FSTR);
+    }
+
+    impl<A, B> ConstTypeName for Bar<A, B>
+    where
+        A: FromReflect + DescribeType,
+        B: FromReflect + DescribeType,
+    {
+        const RAW_SLICE: &'static [&'static str] = &[
+            "tests::derive_foreign::Bar<",
+            A::TYPE_NAME,
+            ", ",
+            B::TYPE_NAME,
+            ">",
+        ];
+    }
+
     __private_derive_reflect_foreign! {
         #[reflect(opt_out(Clone, Debug), crate_name(crate))]
         struct Bar<A, B>
@@ -163,12 +245,39 @@ mod derive_foreign {
         A: FromReflect + DescribeType,
         B: FromReflect + DescribeType;
 
+    // too complex, implement it manually
+    impl<A, B> FixedTypeId for Baz<A, B>
+    where
+        A: FromReflect + DescribeType,
+        B: FromReflect + DescribeType,
+    {
+        const TYPE_NAME: &'static str = fstr_to_str(&Self::TYPE_NAME_FSTR);
+    }
+
+    impl<A, B> ConstTypeName for Baz<A, B>
+    where
+        A: FromReflect + DescribeType,
+        B: FromReflect + DescribeType,
+    {
+        const RAW_SLICE: &'static [&'static str] = &[
+            "tests::derive_foreign::Baz<",
+            A::TYPE_NAME,
+            ", ",
+            B::TYPE_NAME,
+            ">",
+        ];
+    }
+
     __private_derive_reflect_foreign! {
         #[reflect(opt_out(Clone, Debug), crate_name(crate))]
         struct Baz<A, B>(A, B)
         where
             A: FromReflect + DescribeType,
             B: FromReflect + DescribeType;
+    }
+
+    fixed_type_id! {
+        tests::derive_foreign::Qux;
     }
 
     struct Qux;
@@ -184,6 +293,12 @@ mod from_reflect_opt_out {
 
     use super::*;
     use crate::FromReflect;
+
+    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+    fixed_type_id! {
+        tests::from_reflect_opt_out::Percentage;
+    }
 
     #[derive(Reflect, Debug, Clone, Copy, PartialEq)]
     #[reflect(crate_name(crate), opt_out(FromReflect))]
@@ -218,6 +333,11 @@ mod from_reflect_opt_out {
         );
     }
 
+    fixed_type_id! {
+        tests::from_reflect_opt_out::B;
+        tests::from_reflect_opt_out::C;
+    }
+
     #[derive(Reflect, Debug, Clone)]
     #[reflect(crate_name(crate), opt_out(FromReflect))]
     struct B {
@@ -248,6 +368,14 @@ mod from_reflect_with {
 
     use super::*;
     use crate::FromReflect;
+
+    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+    fixed_type_id! {
+        tests::from_reflect_with::A;
+        tests::from_reflect_with::B;
+        tests::from_reflect_with::C;
+    }
 
     #[derive(Reflect, Debug, Clone, Copy, PartialEq)]
     #[reflect(crate_name(crate))]

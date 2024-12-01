@@ -5,6 +5,7 @@ use alloc::vec::Vec;
 use core::any::Any;
 use core::fmt;
 use core::iter::FusedIterator;
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
 use crate::iter::PairIterMut;
 use crate::type_info::graph::NodeId;
@@ -85,6 +86,10 @@ impl DescribeType for StructValue {
             OpaqueNode::new::<Self>(Default::default(), graph)
         })
     }
+}
+
+fixed_type_id! {
+    mirror_mirror::struct_::StructValue
 }
 
 impl Reflect for StructValue {

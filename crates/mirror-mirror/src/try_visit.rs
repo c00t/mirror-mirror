@@ -150,6 +150,13 @@ mod tests {
     use alloc::collections::BTreeMap;
     use core::convert::Infallible;
 
+    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+    fixed_type_id! {
+        Foo;
+        Bar;
+    }
+
     #[derive(Debug, Clone, Reflect)]
     #[reflect(crate_name(crate))]
     struct Foo {
@@ -206,6 +213,10 @@ mod tests {
 
     #[test]
     fn recursive() {
+        fixed_type_id! {
+            Recursive;
+        }
+
         #[derive(Debug, Clone, Reflect)]
         #[reflect(crate_name(crate))]
         struct Recursive(i32, Vec<Recursive>);

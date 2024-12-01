@@ -3,6 +3,7 @@ use alloc::boxed::Box;
 use alloc::string::String;
 use core::any::Any;
 use core::fmt;
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
 use crate::iter::PairIterMut;
 use crate::iter::ValueIterMut;
@@ -201,6 +202,10 @@ impl DescribeType for EnumValue {
             OpaqueNode::new::<Self>(Default::default(), graph)
         })
     }
+}
+
+fixed_type_id! {
+    mirror_mirror::enum_::EnumValue
 }
 
 impl Reflect for EnumValue {

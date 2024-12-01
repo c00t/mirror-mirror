@@ -2,6 +2,7 @@ use alloc::boxed::Box;
 use core::any::Any;
 use core::fmt;
 use core::iter::FusedIterator;
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
 
 use crate::iter::ValueIterMut;
 use crate::tuple::TupleValue;
@@ -73,6 +74,10 @@ impl DescribeType for TupleStructValue {
             OpaqueNode::new::<Self>(Default::default(), graph)
         })
     }
+}
+
+fixed_type_id! {
+    mirror_mirror::tuple_struct::TupleStructValue
 }
 
 impl Reflect for TupleStructValue {

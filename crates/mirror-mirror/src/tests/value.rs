@@ -2,8 +2,14 @@ use std::collections::HashMap;
 
 use crate::{DescribeType, FromReflect, Reflect};
 
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
 #[test]
 fn option_uses_none_as_default() {
+    fixed_type_id! {
+        tests::value::option_uses_none_as_default::Foo;
+    }
+
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Foo {

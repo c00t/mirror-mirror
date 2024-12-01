@@ -2,8 +2,14 @@ use crate::type_info::GetMeta;
 use crate::DescribeType;
 use crate::Reflect;
 
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
 #[test]
 fn works() {
+    fixed_type_id! {
+        tests::meta::works::Foo;
+    }
+
     #[derive(Reflect, Debug, Clone)]
     #[reflect(crate_name(crate), meta(foo = "bar", baz = 42))]
     struct Foo;
@@ -28,6 +34,12 @@ fn works() {
             .unwrap(),
         &42,
     );
+}
+
+fixed_type_id! {
+    tests::meta::A;
+    tests::meta::B;
+    tests::meta::C;
 }
 
 #[derive(Reflect, Debug, Clone)]

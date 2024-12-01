@@ -276,6 +276,8 @@ fn reflect_eq_map(a: &dyn Map, b: &dyn Map) -> Option<bool> {
 mod tests {
     use alloc::collections::BTreeMap;
 
+    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
     use crate::{
         enum_::EnumValue, struct_::StructValue, tuple::TupleValue, tuple_struct::TupleStructValue,
     };
@@ -329,6 +331,10 @@ mod tests {
 
     #[test]
     fn reflect_eq_struct() {
+        fixed_type_id! {
+            A;
+        }
+
         #[derive(Reflect, Debug, Clone)]
         #[reflect(crate_name(crate))]
         struct A {
@@ -386,6 +392,10 @@ mod tests {
 
     #[test]
     fn reflect_eq_tuple_struct() {
+        fixed_type_id! {
+            A;
+        }
+
         #[derive(Reflect, Debug, Clone)]
         #[reflect(crate_name(crate))]
         struct A(i32, bool);
@@ -440,6 +450,10 @@ mod tests {
 
     #[test]
     fn reflect_eq_enum() {
+        fixed_type_id! {
+            A;
+        }
+
         #[derive(Reflect, Debug, Clone)]
         #[reflect(crate_name(crate))]
         enum A {

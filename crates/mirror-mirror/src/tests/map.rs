@@ -8,6 +8,8 @@ use crate::GetFieldMut;
 use crate::Map;
 use crate::Reflect;
 
+use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
 #[test]
 fn works() {
     let mut map = BTreeMap::from([(1, 1)]);
@@ -31,6 +33,10 @@ fn works() {
 
 #[test]
 fn exotic_key_type() {
+    fixed_type_id! {
+        tests::map::exotic_key_type::Foo;
+    }
+
     #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Reflect)]
     #[reflect(crate_name(crate))]
     struct Foo(i32);
@@ -49,6 +55,10 @@ fn exotic_key_type() {
 
 #[test]
 fn exoctic_value_type() {
+    fixed_type_id! {
+        tests::map::exoctic_value_type::Foo;
+    }
+
     #[derive(Debug, Clone, Reflect)]
     #[reflect(crate_name(crate))]
     struct Foo {

@@ -3,8 +3,11 @@ use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
-use core::any::type_name;
-use core::any::TypeId;
+// use core::any::type_name;
+use fixed_type_id::type_id;
+use fixed_type_id::type_name;
+use fixed_type_id::FixedTypeId;
+// use core::any::TypeId;
 use core::hash::BuildHasher;
 use core::ops::Deref;
 
@@ -21,14 +24,14 @@ pub struct NodeId(u64);
 impl NodeId {
     fn new<T>() -> Self
     where
-        T: 'static,
+        T: 'static + FixedTypeId,
     {
-        use core::hash::Hash;
-        use core::hash::Hasher;
+        // use core::hash::Hash;
+        // use core::hash::Hasher;
 
-        let mut hasher = STATIC_RANDOM_STATE.build_hasher();
-        TypeId::of::<T>().hash(&mut hasher);
-        Self(hasher.finish())
+        // let mut hasher = STATIC_RANDOM_STATE.build_hasher();
+        // TypeId::of::<T>().hash(&mut hasher);
+        Self(type_id::<T>().as_u64())
     }
 }
 

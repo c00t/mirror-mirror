@@ -237,6 +237,9 @@ impl<'a> PrettyPrintRoot for OpaqueType<'a> {
 #[cfg(test)]
 mod tests {
     use core::time::Duration;
+    use fixed_type_id::{
+        fixed_type_id, fixed_type_id_without_version_hash, FixedId, FixedTypeId, FixedVersion,
+    };
 
     use super::*;
     use crate::{DescribeType, Reflect};
@@ -253,6 +256,10 @@ mod tests {
 
     #[test]
     fn struct_() {
+        fixed_type_id! {
+            mirror_mirror::tests::pretty_print::struct_::Foo;
+        }
+
         #[derive(Reflect, Clone, Debug)]
         #[reflect(crate_name(crate))]
         struct Foo {
@@ -274,6 +281,10 @@ mod tests {
 
     #[test]
     fn struct_empty() {
+        fixed_type_id! {
+            mirror_mirror::tests::pretty_print::struct_empty::Foo;
+        }
+
         #[derive(Reflect, Clone, Debug)]
         #[reflect(crate_name(crate))]
         struct Foo {}
@@ -286,6 +297,10 @@ mod tests {
 
     #[test]
     fn tuple_struct() {
+        fixed_type_id! {
+            mirror_mirror::tests::pretty_print::tuple_struct::Foo;
+        }
+
         #[derive(Reflect, Clone, Debug)]
         #[reflect(crate_name(crate))]
         struct Foo(String, Vec<i32>);
@@ -301,6 +316,10 @@ mod tests {
 
     #[test]
     fn tuple_struct_empty() {
+        fixed_type_id! {
+            mirror_mirror::tests::pretty_print::tuple_struct_empty::Foo;
+        }
+
         #[derive(Reflect, Clone, Debug)]
         #[reflect(crate_name(crate))]
         struct Foo();
@@ -313,6 +332,10 @@ mod tests {
 
     #[test]
     fn unit_struct() {
+        fixed_type_id! {
+            mirror_mirror::tests::pretty_print::unit_struct::Foo;
+        }
+
         #[derive(Reflect, Clone, Debug)]
         #[reflect(crate_name(crate))]
         struct Foo;
@@ -334,6 +357,10 @@ mod tests {
 
     #[test]
     fn enum_() {
+        fixed_type_id! {
+            mirror_mirror::tests::pretty_print::enum_::Foo;
+        }
+
         #[derive(Reflect, Clone, Debug)]
         #[reflect(crate_name(crate))]
         enum Foo {

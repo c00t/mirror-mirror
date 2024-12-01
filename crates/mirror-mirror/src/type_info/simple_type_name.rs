@@ -1,8 +1,10 @@
 #![allow(clippy::wildcard_in_or_patterns)]
 
-use core::{any::type_name, fmt};
+// use core::{any::type_name, fmt};
+use core::fmt;
 
 use alloc::borrow::Cow;
+use fixed_type_id::{type_name, FixedTypeId};
 use syn::{
     token::Mut, AngleBracketedGenericArguments, Expr, ExprLit, GenericArgument, Ident, Lit,
     LitBool, LitFloat, LitInt, Path, PathArguments, PathSegment, Type, TypeArray, TypePath,
@@ -15,7 +17,8 @@ use syn::{
 /// to print the types names in a simplified form:
 ///
 /// ```
-/// use core::any::type_name;
+/// // use core::any::type_name;
+/// use fixed_type_id::type_name;
 /// use mirror_mirror::type_info::SimpleTypeName;
 ///
 /// // the default, fully qualified type name
@@ -90,8 +93,9 @@ impl SimpleTypeName {
         Some(Self { ty })
     }
 
-    pub fn new_from_type<T>() -> Self {
+    pub fn new_from_type<T: FixedTypeId>() -> Self {
         let name = type_name::<T>();
+        eprintln!("name: {name}");
         Self::new(name).unwrap_or_else(|| panic!("failed to parse type name: `{name}`"))
     }
 }
