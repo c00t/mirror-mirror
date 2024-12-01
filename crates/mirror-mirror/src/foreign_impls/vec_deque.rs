@@ -1,9 +1,9 @@
 use alloc::boxed::Box;
+use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 use core::any::Any;
 
 use crate::array::Array;
-use crate::iter::ValueIterMut;
 use crate::list::ListError;
 use crate::type_info::graph::ListNode;
 use crate::type_info::graph::NodeId;
@@ -17,13 +17,13 @@ use crate::ReflectOwned;
 use crate::ReflectRef;
 use crate::Value;
 
-impl<T> List for Vec<T>
+impl<T> List for VecDeque<T>
 where
     T: FromReflect + DescribeType,
 {
     fn try_push(&mut self, element: &dyn Reflect) -> Result<(), ListError> {
         if let Some(value) = T::from_reflect(element) {
-            Vec::push(self, value);
+            VecDeque::push_back(self, value);
             Ok(())
         } else {
             Err(ListError)
@@ -31,13 +31,13 @@ where
     }
 
     fn pop(&mut self) -> Option<Box<dyn Reflect>> {
-        let value = Vec::pop(self)?;
+        let value = VecDeque::pop_back(self)?;
         Some(Box::new(value))
     }
 
     fn try_remove(&mut self, index: usize) -> Option<Box<dyn Reflect>> {
         if index < self.len() {
-            let value = Vec::remove(self, index);
+            let value = VecDeque::remove(self, index);
             Some(Box::new(value))
         } else {
             None
@@ -46,7 +46,7 @@ where
 
     fn try_insert(&mut self, index: usize, element: &dyn Reflect) -> Result<(), ListError> {
         if let Some(element) = T::from_reflect(element) {
-            Vec::insert(self, index, element);
+            VecDeque::insert(self, index, element);
             Ok(())
         } else {
             Err(ListError)
@@ -54,55 +54,41 @@ where
     }
 }
 
-impl<T> Array for Vec<T>
+impl<T> Array for VecDeque<T>
 where
     T: FromReflect + DescribeType,
 {
     fn get(&self, index: usize) -> Option<&dyn Reflect> {
-        self.as_slice().get(index).map(|value| value.as_reflect())
+        VecDeque::get(self, index).map(|value| value.as_reflect())
     }
 
     fn get_mut(&mut self, index: usize) -> Option<&mut dyn Reflect> {
-        self.as_mut_slice()
-            .get_mut(index)
-            .map(|value| value.as_reflect_mut())
+        VecDeque::get_mut(self, index).map(|value| value.as_reflect_mut())
     }
 
     fn len(&self) -> usize {
-        Vec::len(self)
+        VecDeque::len(self)
     }
 
     fn is_empty(&self) -> bool {
-        Vec::is_empty(self)
+        VecDeque::is_empty(self)
     }
 
     fn iter(&self) -> crate::array::Iter<'_> {
         crate::array::Iter::new(self)
     }
 
-    fn iter_mut(&mut self) -> ValueIterMut<'_> {
-        let iter = self
-            .as_mut_slice()
-            .iter_mut()
-            .map(|value| value.as_reflect_mut());
+    fn iter_mut(&mut self) -> crate::iter::ValueIterMut<'_> {
+        let iter = VecDeque::iter_mut(self).map(|value| value.as_reflect_mut());
         Box::new(iter)
     }
 
     fn swap(&mut self, a: usize, b: usize) {
-        self.as_mut_slice().swap(a, b);
+        VecDeque::swap(self, a, b);
     }
 }
 
-impl<T> DescribeType for Vec<T>
-where
-    T: DescribeType,
-{
-    fn build(graph: &mut TypeGraph) -> NodeId {
-        graph.get_or_build_node_with::<Self, _>(|graph| ListNode::new::<Self, T>(graph))
-    }
-}
-
-impl<T> Reflect for Vec<T>
+impl<T> Reflect for VecDeque<T>
 where
     T: FromReflect + DescribeType,
 {
@@ -129,7 +115,7 @@ where
     }
 
     fn debug(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_list().entries(self.iter()).finish()
+        f.debug_list().entries(Array::iter(self)).finish()
     }
 
     fn reflect_owned(self: Box<Self>) -> ReflectOwned {
@@ -157,7 +143,7 @@ where
     }
 }
 
-impl<T> FromReflect for Vec<T>
+impl<T> FromReflect for VecDeque<T>
 where
     T: FromReflect + DescribeType,
 {
@@ -167,23 +153,32 @@ where
             ReflectRef::List(list) => list.iter(),
             _ => return None,
         };
-        let mut out = Vec::with_capacity(iter.len());
+        let mut out = VecDeque::with_capacity(iter.len());
         for value in iter {
-            out.push(T::from_reflect(value)?);
+            out.push_back(T::from_reflect(value)?);
         }
         Some(out)
     }
 }
 
-impl<T> From<Vec<T>> for Value
+impl<T> From<VecDeque<T>> for Value
 where
     T: Reflect,
 {
-    fn from(list: Vec<T>) -> Self {
+    fn from(list: VecDeque<T>) -> Self {
         let list = list
             .into_iter()
             .map(|value| value.to_value())
             .collect::<Vec<_>>();
         Value::List(list)
+    }
+}
+
+impl<T> DescribeType for VecDeque<T>
+where
+    T: DescribeType,
+{
+    fn build(graph: &mut TypeGraph) -> NodeId {
+        graph.get_or_build_node_with::<Self, _>(|graph| ListNode::new::<Self, T>(graph))
     }
 }

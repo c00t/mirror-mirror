@@ -43,13 +43,14 @@ impl<'a> PrettyPrintRoot for Type<'a> {
             Type::List(inner) => inner.pretty_root_fmt(f),
             Type::Array(inner) => inner.pretty_root_fmt(f),
             Type::Map(inner) => inner.pretty_root_fmt(f),
+            Type::Set(inner) => inner.pretty_root_fmt(f),
             Type::Scalar(inner) => inner.pretty_root_fmt(f),
             Type::Opaque(inner) => inner.pretty_root_fmt(f),
         }
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "simple_type_name")]
 fn simple_type_name_fmt(type_name: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     if let Some(name) = super::SimpleTypeName::new(type_name) {
         write!(f, "{name}")
@@ -58,7 +59,7 @@ fn simple_type_name_fmt(type_name: &str, f: &mut fmt::Formatter<'_>) -> fmt::Res
     }
 }
 
-#[cfg(not(feature = "std"))]
+#[cfg(not(feature = "simple_type_name"))]
 fn simple_type_name_fmt(type_name: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str(type_name)
 }
@@ -203,6 +204,15 @@ impl<'a> PrettyPrintRoot for MapType<'a> {
     }
 }
 
+impl<'a> PrettyPrintRoot for SetType<'a> {
+    fn pretty_root_fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_char('{')?;
+        simple_type_name_fmt(self.element_type().type_name(), f)?;
+        f.write_char('}')?;
+        Ok(())
+    }
+}
+
 impl PrettyPrintRoot for ScalarType {
     fn pretty_root_fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -240,6 +250,9 @@ mod tests {
     use fixed_type_id::{
         fixed_type_id, fixed_type_id_without_version_hash, FixedId, FixedTypeId, FixedVersion,
     };
+    use std::collections::HashMap;
+
+    use alloc::collections::BTreeMap;
 
     use super::*;
     use crate::{DescribeType, Reflect};
@@ -260,7 +273,7 @@ mod tests {
             mirror_mirror::tests::pretty_print::struct_::Foo;
         }
 
-        #[derive(Reflect, Clone, Debug)]
+        #[derive(Reflect, Clone, Debug, Default)]
         #[reflect(crate_name(crate))]
         struct Foo {
             a: String,
@@ -285,7 +298,7 @@ mod tests {
             mirror_mirror::tests::pretty_print::struct_empty::Foo;
         }
 
-        #[derive(Reflect, Clone, Debug)]
+        #[derive(Reflect, Clone, Debug, Default)]
         #[reflect(crate_name(crate))]
         struct Foo {}
 
@@ -301,7 +314,7 @@ mod tests {
             mirror_mirror::tests::pretty_print::tuple_struct::Foo;
         }
 
-        #[derive(Reflect, Clone, Debug)]
+        #[derive(Reflect, Clone, Debug, Default)]
         #[reflect(crate_name(crate))]
         struct Foo(String, Vec<i32>);
 
@@ -320,7 +333,7 @@ mod tests {
             mirror_mirror::tests::pretty_print::tuple_struct_empty::Foo;
         }
 
-        #[derive(Reflect, Clone, Debug)]
+        #[derive(Reflect, Clone, Debug, Default)]
         #[reflect(crate_name(crate))]
         struct Foo();
 
@@ -336,7 +349,7 @@ mod tests {
             mirror_mirror::tests::pretty_print::unit_struct::Foo;
         }
 
-        #[derive(Reflect, Clone, Debug)]
+        #[derive(Reflect, Clone, Debug, Default)]
         #[reflect(crate_name(crate))]
         struct Foo;
 
@@ -362,7 +375,7 @@ mod tests {
         }
 
         #[derive(Reflect, Clone, Debug)]
-        #[reflect(crate_name(crate))]
+        #[reflect(crate_name(crate), opt_out(Default))]
         enum Foo {
             A(String, i32),
             A2(),
@@ -410,6 +423,11 @@ mod tests {
         let pp = type_descriptor.pretty_print_root();
 
         assert_eq!(println_and_format!("{pp}"), r#"[String: i32]"#);
+
+        let type_descriptor = <HashMap<u32, (String, i32)> as DescribeType>::type_descriptor();
+        let pp = type_descriptor.pretty_print_root();
+
+        assert_eq!(println_and_format!("{pp}"), r#"[u32: (String, i32)]"#);
     }
 
     #[test]

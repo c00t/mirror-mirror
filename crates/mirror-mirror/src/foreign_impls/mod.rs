@@ -11,7 +11,10 @@ use mirror_mirror_macros::__private_derive_reflect_foreign;
 mod array;
 mod boxed;
 mod btree_map;
+mod hash_map;
+mod kollect;
 mod vec;
+mod vec_deque;
 mod via_scalar;
 
 #[cfg(feature = "glam")]
@@ -31,7 +34,7 @@ __private_derive_reflect_foreign! {
 }
 
 __private_derive_reflect_foreign! {
-    #[reflect(opt_out(Clone, Debug), crate_name(crate))]
+    #[reflect(opt_out(Clone, Debug, Default), crate_name(crate))]
     enum Result<T, E>
     where
         T: FromReflect + DescribeType,
@@ -43,10 +46,10 @@ __private_derive_reflect_foreign! {
 }
 
 __private_derive_reflect_foreign! {
-    #[reflect(opt_out(Clone, Debug), crate_name(crate))]
+    #[reflect(opt_out(Clone, Debug, Default), crate_name(crate))]
     struct Range<Idx>
     where
-        Idx: FromReflect + DescribeType,
+        Idx: FromReflect + DescribeType
     {
         start: Idx,
         end: Idx,
@@ -54,7 +57,7 @@ __private_derive_reflect_foreign! {
 }
 
 __private_derive_reflect_foreign! {
-    #[reflect(opt_out(Clone, Debug), crate_name(crate))]
+    #[reflect(opt_out(Clone, Debug, Default), crate_name(crate))]
     struct RangeFrom<Idx>
     where
         Idx: FromReflect + DescribeType,
@@ -69,7 +72,7 @@ __private_derive_reflect_foreign! {
 }
 
 __private_derive_reflect_foreign! {
-    #[reflect(opt_out(Clone, Debug), crate_name(crate))]
+    #[reflect(opt_out(Clone, Debug, Default), crate_name(crate))]
     struct RangeToInclusive<Idx>
     where
         Idx: FromReflect + DescribeType,
@@ -79,7 +82,7 @@ __private_derive_reflect_foreign! {
 }
 
 __private_derive_reflect_foreign! {
-    #[reflect(opt_out(Clone, Debug), crate_name(crate))]
+    #[reflect(opt_out(Clone, Debug, Default), crate_name(crate))]
     struct RangeTo<Idx>
     where
         Idx: FromReflect + DescribeType,
@@ -92,8 +95,14 @@ impl DescribeType for Infallible {
     fn build(graph: &mut TypeGraph) -> NodeId {
         let variants = &[];
         graph.get_or_build_node_with::<Self, _>(|_graph| {
-            EnumNode::new::<Self>(variants, BTreeMap::from([]), &[])
+            EnumNode::new::<Self>(variants, LinearMap::from([]), &[])
         })
+    }
+}
+
+impl DefaultValue for Infallible {
+    fn default_value() -> Option<Value> {
+        None
     }
 }
 
@@ -114,8 +123,8 @@ impl Reflect for Infallible {
         match *self {}
     }
 
-    fn type_descriptor(&self) -> Cow<'static, TypeDescriptor> {
-        <Self as DescribeType>::type_descriptor()
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        match *self {}
     }
 
     fn patch(&mut self, _value: &dyn Reflect) {

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
 use alloc::string::String;
@@ -73,7 +75,7 @@ fn from_reflect() {
     let foo = Foo::default();
     let foo_reflect: &dyn Reflect = &foo;
 
-    let foo = Foo::from_reflect(foo_reflect).unwrap();
+    let foo = <Foo as FromReflect>::from_reflect(foo_reflect).unwrap();
 
     assert_eq!(foo.field, 0);
 }
@@ -135,7 +137,7 @@ fn box_dyn_reflect_as_reflect() {
         &42,
     );
 
-    let foo = Foo::from_reflect(box_dyn_reflect.as_reflect()).unwrap();
+    let foo = <Foo as FromReflect>::from_reflect(box_dyn_reflect.as_reflect()).unwrap();
     assert_eq!(foo, Foo { field: 42 });
 }
 
@@ -147,19 +149,19 @@ fn deeply_nested() {
         tests::struct_::deeply_nested::Baz;
     }
 
-    #[derive(Reflect, Clone, Debug)]
+    #[derive(Reflect, Clone, Debug, Default)]
     #[reflect(crate_name(crate))]
     struct Foo {
         bar: Bar,
     }
 
-    #[derive(Reflect, Clone, Debug)]
+    #[derive(Reflect, Clone, Debug, Default)]
     #[reflect(crate_name(crate))]
     struct Bar {
         baz: Baz,
     }
 
-    #[derive(Reflect, Clone, Debug)]
+    #[derive(Reflect, Clone, Debug, Default)]
     #[reflect(crate_name(crate))]
     struct Baz {
         qux: i32,
@@ -218,14 +220,14 @@ fn accessing_docs_in_type_info() {
     /// Here are the docs.
     ///
     /// Foo bar.
-    #[derive(Reflect, Clone, Debug)]
+    #[derive(Reflect, Clone, Debug, Default)]
     #[reflect(crate_name(crate))]
     struct Foo {
         inner: Vec<BTreeMap<String, Vec<Option<Inner>>>>,
     }
 
     #[derive(Reflect, Clone, Debug)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     enum Inner {
         Variant {
             /// Bingo!
@@ -260,13 +262,13 @@ fn consistent_iteration_order_of_struct_fields() {
         tests::struct_::consistent_iteration_order_of_struct_fields::Inner;
     }
 
-    #[derive(Reflect, Debug, Clone)]
+    #[derive(Reflect, Debug, Clone, Default)]
     #[reflect(crate_name(crate))]
     struct Outer {
         inner: Inner,
     }
 
-    #[derive(Reflect, Debug, Clone, Copy)]
+    #[derive(Reflect, Debug, Clone, Copy, Default)]
     #[reflect(crate_name(crate))]
     struct Inner {
         // the order the fields are declared in is important!
@@ -308,13 +310,13 @@ fn consistent_iteration_order_of_struct_variant_fields() {
     }
 
     #[derive(Reflect, Debug, Clone)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     struct Outer {
         inner: Inner,
     }
 
     #[derive(Reflect, Debug, Clone, Copy)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     enum Inner {
         A {
             // the order the fields are declared in is important!
@@ -359,4 +361,147 @@ fn consistent_iteration_order_of_struct_variant_fields() {
     }
 
     assert_eq!(by_value, by_type);
+}
+
+#[test]
+fn deserialize_old_struct() {
+    mod v1 {
+        use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+        fixed_type_id! {
+            tests::struct_::deserialize_old_struct::v1::Foo;
+        }
+
+        #[derive(mirror_mirror_1::Reflect, Debug, Clone)]
+        #[reflect(crate_name(mirror_mirror_1))]
+        pub struct Foo {
+            pub n: i32,
+        }
+    }
+
+    mod v2 {
+        use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+
+        fixed_type_id! {
+            tests::struct_::deserialize_old_struct::v2::Foo;
+        }
+
+        #[derive(crate::Reflect, Default, Debug, Clone)]
+        #[reflect(crate_name(crate))]
+        pub struct Foo {
+            pub n: i32,
+        }
+    }
+
+    // deserializing value
+    let n = 123;
+    let v1_foo = mirror_mirror_1::Reflect::to_value(&v1::Foo { n });
+    let v1_ron = ron::to_string(&v1_foo).unwrap();
+
+    let v2_value = ron::from_str::<crate::Value>(&v1_ron).unwrap();
+    let v2_foo = <v2::Foo as crate::FromReflect>::from_reflect(&v2_value).unwrap();
+
+    assert_eq!(n, v2_foo.n);
+
+    // deserializing type descriptor
+    let v1_type_descriptor = <v1::Foo as mirror_mirror_1::DescribeType>::type_descriptor();
+    let v1_ron = ron::to_string(&v1_type_descriptor).unwrap();
+
+    let v2_type_descriptor =
+        ron::from_str::<Cow<'static, crate::type_info::TypeDescriptor>>(&v1_ron).unwrap();
+
+    let name_type = v2_type_descriptor
+        .as_struct()
+        .unwrap()
+        .field_type("n")
+        .unwrap()
+        .get_type()
+        .as_scalar()
+        .unwrap();
+    assert!(matches!(name_type, crate::type_info::ScalarType::i32));
+}
+
+#[test]
+fn default_value() {
+    fixed_type_id! {
+        tests::struct_::default_value::Foo;
+        tests::struct_::default_value::Bar;
+    }
+
+    #[derive(Reflect, Debug, Clone, Copy)]
+    #[reflect(crate_name(crate))]
+    struct Foo {
+        a: u32,
+        b: u32,
+    }
+
+    impl Default for Foo {
+        fn default() -> Self {
+            Foo { a: 1, b: 2 }
+        }
+    }
+
+    #[derive(Reflect, Debug, Clone, Copy)]
+    #[reflect(crate_name(crate), opt_out(Default))]
+    struct Bar {
+        a: u32,
+        b: u32,
+    }
+
+    let foo_descriptor = <Foo as DescribeType>::type_descriptor();
+    let bar_descriptor = <Bar as DescribeType>::type_descriptor();
+
+    assert!(foo_descriptor.has_default_value());
+    assert!(!bar_descriptor.has_default_value());
+
+    let foo_default = Foo::default().to_value();
+
+    assert_eq!(foo_descriptor.default_value(), Some(foo_default));
+    assert_eq!(bar_descriptor.default_value(), None);
+}
+
+#[test]
+fn field_named_named() {
+    fixed_type_id! {
+        tests::struct_::field_named_named::A;
+    }
+
+    #[derive(Reflect, Debug, Clone)]
+    #[reflect(crate_name(crate), opt_out(Default))]
+    struct A {
+        name: String,
+        value: (),
+        reflect: (),
+        enum_: (),
+        struct_: (),
+    }
+
+    let mut a = A {
+        name: "foo".to_owned(),
+        value: (),
+        reflect: (),
+        enum_: (),
+        struct_: (),
+    };
+
+    assert_eq!(
+        a.as_reflect()
+            .as_struct()
+            .unwrap()
+            .field("name")
+            .unwrap()
+            .downcast_ref::<String>()
+            .unwrap(),
+        "foo"
+    );
+    assert_eq!(
+        a.as_reflect_mut()
+            .as_struct_mut()
+            .unwrap()
+            .field_mut("name")
+            .unwrap()
+            .downcast_mut::<String>()
+            .unwrap(),
+        "foo"
+    );
 }

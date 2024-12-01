@@ -4,7 +4,6 @@ use fixed_type_id::{type_id, type_name, FixedId, FixedTypeId};
 
 use alloc::borrow::Cow;
 use alloc::boxed::Box;
-use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
 
@@ -16,9 +15,7 @@ use crate::key_path::GetTypePath;
 use crate::key_path::Key;
 use crate::key_path::KeyPath;
 use crate::key_path::NamedOrNumbered;
-use crate::struct_::StructValue;
 use crate::tuple::TupleValue;
-use crate::tuple_struct::TupleStructValue;
 use crate::FromReflect;
 use crate::Reflect;
 use crate::Value;
@@ -26,11 +23,12 @@ use crate::Value;
 pub mod graph;
 pub mod pretty_print;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "simple_type_name")]
 mod simple_type_name;
 
 pub use self::pretty_print::{PrettyPrintRoot, RootPrettyPrinter};
-#[cfg(feature = "std")]
+
+#[cfg(feature = "simple_type_name")]
 pub use self::simple_type_name::SimpleTypeName;
 
 /// Trait for accessing type information.
@@ -39,53 +37,38 @@ pub use self::simple_type_name::SimpleTypeName;
 pub trait DescribeType: 'static + FixedTypeId {
     /// Creates a type descriptor for the current type.
     ///
-    /// On targets with the standard library, it's done only once per process, then subsequent
-    /// accesses are "free" because the result is cached. On non-std targets, the type descriptor
-    /// is recomputed and reallocated on each call.
+    /// It's done only once per process, then subsequent accesses are "free" because the result is cached.
     ///
     /// TODO: I don't think it should handle type info cache internally. But just leave it as is for now.
     fn type_descriptor() -> Cow<'static, TypeDescriptor> {
-        #[cfg(feature = "std")]
-        {
-            use crate::__private::*;
-            use std::collections::HashMap;
-            use std::sync::RwLock;
+        use crate::__private::*;
+        use std::collections::HashMap;
+        use std::sync::RwLock;
 
-            // a map required for generic types to have different type descriptors such as
-            // `Vec<i32>` and `Vec<bool>`
-            static INFO: OnceBox<
-                RwLock<HashMap<FixedId, &'static TypeDescriptor, ahash::RandomState>>,
-            > = OnceBox::new();
+        // amortizing creation of type descriptors so that each process only needs to compute a type descriptor for each type once
+        static INFO: OnceBox<
+            RwLock<HashMap<FixedId, &'static TypeDescriptor, ahash::RandomState>>,
+        > = OnceBox::new();
 
-            let type_id = type_id::<Self>();
+        let type_id = type_id::<Self>();
 
-            let lock = INFO.get_or_init(|| {
-                Box::from(RwLock::new(HashMap::with_hasher(
-                    STATIC_RANDOM_STATE.clone(),
-                ))) // use seeded random state
-            });
-            if let Some(info) = lock.read().unwrap().get(&type_id) {
-                return Cow::Borrowed(info);
-            }
-
-            let mut map = lock.write().unwrap();
-            let info = map.entry(type_id).or_insert_with(|| {
-                let mut graph = TypeGraph::default();
-                let id = Self::build(&mut graph);
-                let info = TypeDescriptor::new(id, graph);
-                Box::leak(Box::new(info))
-            });
-            Cow::Borrowed(*info)
+        let lock = INFO.get_or_init(|| {
+            Box::from(RwLock::new(HashMap::with_hasher(
+                STATIC_RANDOM_STATE.clone(),
+            ))) // use seeded random state
+        });
+        if let Some(info) = lock.read().unwrap().get(&type_id) {
+            return Cow::Borrowed(info);
         }
 
-        #[cfg(not(feature = "std"))]
-        {
-            use crate::__private::*;
-
+        let mut map = lock.write().unwrap();
+        let info = map.entry(type_id).or_insert_with(|| {
             let mut graph = TypeGraph::default();
             let id = Self::build(&mut graph);
-            Cow::Owned(TypeDescriptor::new(id, graph))
-        }
+            let info = TypeDescriptor::new(id, graph);
+            Box::leak(Box::new(info))
+        });
+        Cow::Borrowed(*info)
     }
 
     /// Creates the full subtree describing this node in the `TypeGraph`, and returns the `NodeId`
@@ -93,12 +76,23 @@ pub trait DescribeType: 'static + FixedTypeId {
     fn build(graph: &mut TypeGraph) -> NodeId;
 }
 
-/// The root of a type.
+/// Trait for accessing the default [`Value`] of a struct, tuple struct, or enum.
+///
+/// Will be implemented by `#[derive(Reflect)]`.
+pub trait DefaultValue {
+    /// Returns the default value for a type that has `#[derive(Reflect)]`.
+    fn default_value() -> Option<Value>;
+}
+
+/// A descriptor of a type including all sub-types.
 ///
 /// Accessed via the [`DescribeType`] trait.
 ///
 /// `mirror-mirror` represents types as (possibly cyclic) graphs since types can contain
 /// themselves. For example `struct Foo(Vec<Foo>)`.
+///
+/// Note that the trait-implemented `PartialEq`, `Eq`, and `Hash` implementations are *not* stable
+/// across different binary builds!
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "speedy", derive(speedy::Readable, speedy::Writable))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -190,6 +184,7 @@ pub enum Type<'a> {
     List(ListType<'a>),
     Array(ArrayType<'a>),
     Map(MapType<'a>),
+    Set(SetType<'a>),
     Scalar(ScalarType),
     Opaque(OpaqueType<'a>),
 }
@@ -246,6 +241,13 @@ impl<'a> Type<'a> {
                 };
                 Type::Map(node)
             }
+            TypeNode::Set(node) => {
+                let node = SetType {
+                    node: WithId::new(id, node),
+                    graph,
+                };
+                Type::Set(node)
+            }
             TypeNode::Scalar(scalar) => {
                 let node = match scalar {
                     ScalarNode::usize => ScalarType::usize,
@@ -286,6 +288,7 @@ impl<'a> Type<'a> {
             Type::List(inner) => inner.type_name(),
             Type::Array(inner) => inner.type_name(),
             Type::Map(inner) => inner.type_name(),
+            Type::Set(inner) => inner.type_name(),
             Type::Scalar(inner) => inner.type_name(),
             Type::Opaque(inner) => inner.type_name(),
         }
@@ -300,6 +303,7 @@ impl<'a> Type<'a> {
             Type::List(inner) => inner.into_type_info_at_path(),
             Type::Array(inner) => inner.into_type_info_at_path(),
             Type::Map(inner) => inner.into_type_info_at_path(),
+            Type::Set(inner) => inner.into_type_info_at_path(),
             Type::Scalar(inner) => inner.into_type_info_at_path(),
             Type::Opaque(inner) => inner.into_type_info_at_path(),
         }
@@ -314,6 +318,7 @@ impl<'a> Type<'a> {
             Type::List(inner) => Some(inner.default_value()),
             Type::Array(inner) => inner.default_value(),
             Type::Map(inner) => Some(inner.default_value()),
+            Type::Set(inner) => Some(inner.default_value()),
             Type::Scalar(inner) => Some(inner.default_value()),
             Type::Opaque(inner) => inner.default_value(),
         }
@@ -328,6 +333,7 @@ impl<'a> Type<'a> {
             Type::List(inner) => inner.has_default_value(),
             Type::Array(inner) => inner.has_default_value(),
             Type::Map(inner) => inner.has_default_value(),
+            Type::Set(inner) => inner.has_default_value(),
             Type::Scalar(inner) => inner.has_default_value(),
             Type::Opaque(inner) => inner.has_default_value(),
         }
@@ -342,6 +348,7 @@ impl<'a> Type<'a> {
             Type::List(inner) => Cow::Owned(inner.into_type_descriptor()),
             Type::Array(inner) => Cow::Owned(inner.into_type_descriptor()),
             Type::Map(inner) => Cow::Owned(inner.into_type_descriptor()),
+            Type::Set(inner) => Cow::Owned(inner.into_type_descriptor()),
             Type::Scalar(inner) => match inner {
                 ScalarType::usize => <usize as DescribeType>::type_descriptor(),
                 ScalarType::u8 => <u8 as DescribeType>::type_descriptor(),
@@ -409,6 +416,13 @@ impl<'a> Type<'a> {
     pub fn as_map(self) -> Option<MapType<'a>> {
         match self {
             Type::Map(inner) => Some(inner),
+            _ => None,
+        }
+    }
+
+    pub fn as_set(self) -> Option<SetType<'a>> {
+        match self {
+            Type::Set(inner) => Some(inner),
             _ => None,
         }
     }
@@ -493,6 +507,7 @@ mod private {
     impl<'a> Sealed for ListType<'a> {}
     impl<'a> Sealed for ArrayType<'a> {}
     impl<'a> Sealed for MapType<'a> {}
+    impl<'a> Sealed for SetType<'a> {}
     impl Sealed for ScalarType {}
     impl Sealed for Type<'_> {}
     impl Sealed for StructType<'_> {}
@@ -530,9 +545,12 @@ impl<'a> GetMeta<'a> for Type<'a> {
             Type::TupleStruct(inner) => inner.meta(key),
             Type::Enum(inner) => inner.meta(key),
             Type::Opaque(inner) => inner.meta(key),
-            Type::Tuple(_) | Type::List(_) | Type::Array(_) | Type::Map(_) | Type::Scalar(_) => {
-                None
-            }
+            Type::Set(_)
+            | Type::Tuple(_)
+            | Type::List(_)
+            | Type::Array(_)
+            | Type::Map(_)
+            | Type::Scalar(_) => None,
         }
     }
 
@@ -545,6 +563,7 @@ impl<'a> GetMeta<'a> for Type<'a> {
             | Type::List(_)
             | Type::Array(_)
             | Type::Map(_)
+            | Type::Set(_)
             | Type::Scalar(_)
             | Type::Opaque(_) => &[],
         }
@@ -675,12 +694,9 @@ impl<'a> StructType<'a> {
     }
 
     pub fn field_types(self) -> impl Iterator<Item = NamedField<'a>> {
-        self.node.field_names.iter().map(move |field_name| {
-            let node = self.node.fields.get(field_name).unwrap();
-            NamedField {
-                node,
-                graph: self.graph,
-            }
+        self.node.fields.iter().map(|(_, node)| NamedField {
+            node,
+            graph: self.graph,
         })
     }
 
@@ -697,8 +713,11 @@ impl<'a> StructType<'a> {
     }
 
     pub fn field_type_at(self, index: usize) -> Option<NamedField<'a>> {
-        let name = self.node.field_names.get(index)?;
-        self.field_type(name)
+        let node = &self.node.fields.get_index(index)?.1;
+        Some(NamedField {
+            node,
+            graph: self.graph,
+        })
     }
 
     fn into_type_info_at_path(self) -> TypeAtPath<'a> {
@@ -713,16 +732,11 @@ impl<'a> StructType<'a> {
     }
 
     pub fn default_value(self) -> Option<Value> {
-        let mut value = StructValue::new();
-        for field in self.field_types() {
-            value.set_field(field.name(), field.get_type().default_value()?);
-        }
-        Some(value.to_value())
+        self.node.default_value.clone()
     }
 
     pub fn has_default_value(&self) -> bool {
-        self.field_types()
-            .all(|field| field.get_type().has_default_value())
+        self.node.default_value.is_some()
     }
 }
 
@@ -768,16 +782,11 @@ impl<'a> TupleStructType<'a> {
     }
 
     pub fn default_value(self) -> Option<Value> {
-        let mut value = TupleStructValue::new();
-        for field in self.field_types() {
-            value.push_field(field.get_type().default_value()?);
-        }
-        Some(value.to_value())
+        self.node.default_value.clone()
     }
 
     pub fn has_default_value(&self) -> bool {
-        self.field_types()
-            .all(|field| field.get_type().has_default_value())
+        self.node.default_value.is_some()
     }
 }
 
@@ -887,16 +896,11 @@ impl<'a> EnumType<'a> {
     }
 
     pub fn default_value(self) -> Option<Value> {
-        let mut variants = self.variants();
-        let first_variant = variants.next()?;
-        first_variant.default_value()
+        self.node.default_value.clone()
     }
 
     pub fn has_default_value(&self) -> bool {
-        let mut variants = self.variants();
-        variants
-            .next()
-            .map_or(false, |first_variant| first_variant.has_default_value())
+        self.node.default_value.is_some()
     }
 }
 
@@ -1058,12 +1062,9 @@ impl<'a> StructVariant<'a> {
     }
 
     pub fn field_types(self) -> impl Iterator<Item = NamedField<'a>> {
-        self.node.field_names.iter().map(|field_name| {
-            let node = self.node.fields.get(field_name).unwrap();
-            NamedField {
-                node,
-                graph: self.graph,
-            }
+        self.node.fields.iter().map(|(_, node)| NamedField {
+            node,
+            graph: self.graph,
         })
     }
 
@@ -1080,8 +1081,11 @@ impl<'a> StructVariant<'a> {
     }
 
     pub fn field_type_at(self, index: usize) -> Option<NamedField<'a>> {
-        let name = self.node.field_names.get(index)?;
-        self.field_type(name)
+        let node = &self.node.fields.get_index(index)?.1;
+        Some(NamedField {
+            node,
+            graph: self.graph,
+        })
     }
 
     pub fn enum_type(self) -> EnumType<'a> {
@@ -1342,7 +1346,42 @@ impl<'a> MapType<'a> {
     }
 
     pub fn default_value(self) -> Value {
-        BTreeMap::<(), ()>::new().to_value()
+        Value::Map(Default::default())
+    }
+
+    pub fn has_default_value(&self) -> bool {
+        true
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct SetType<'a> {
+    node: WithId<&'a SetNode>,
+    graph: &'a TypeGraph,
+}
+
+impl<'a> SetType<'a> {
+    pub fn type_name(self) -> &'a str {
+        &self.node.type_name
+    }
+
+    pub fn element_type(self) -> Type<'a> {
+        Type::new(self.node.element_type_id, self.graph)
+    }
+
+    fn into_type_info_at_path(self) -> TypeAtPath<'a> {
+        TypeAtPath::Set(self)
+    }
+
+    pub fn into_type_descriptor(self) -> TypeDescriptor {
+        TypeDescriptor {
+            root: self.node.id,
+            graph: self.graph.clone(),
+        }
+    }
+
+    pub fn default_value(self) -> Value {
+        Value::Set(Default::default())
     }
 
     pub fn has_default_value(&self) -> bool {
@@ -1392,6 +1431,7 @@ pub enum TypeAtPath<'a> {
     List(ListType<'a>),
     Array(ArrayType<'a>),
     Map(MapType<'a>),
+    Set(SetType<'a>),
     Scalar(ScalarType),
     Opaque(OpaqueType<'a>),
 }
@@ -1408,6 +1448,7 @@ impl<'a> GetMeta<'a> for TypeAtPath<'a> {
             | TypeAtPath::List(_)
             | TypeAtPath::Array(_)
             | TypeAtPath::Map(_)
+            | TypeAtPath::Set(_)
             | TypeAtPath::Scalar(_) => None,
         }
     }
@@ -1422,6 +1463,7 @@ impl<'a> GetMeta<'a> for TypeAtPath<'a> {
             | TypeAtPath::List(_)
             | TypeAtPath::Array(_)
             | TypeAtPath::Map(_)
+            | TypeAtPath::Set(_)
             | TypeAtPath::Scalar(_)
             | TypeAtPath::Opaque(_) => &[],
         }
@@ -1439,6 +1481,7 @@ impl<'a> TypeAtPath<'a> {
             TypeAtPath::List(inner) => Some(inner.default_value()),
             TypeAtPath::Array(inner) => inner.default_value(),
             TypeAtPath::Map(inner) => Some(inner.default_value()),
+            TypeAtPath::Set(inner) => Some(inner.default_value()),
             TypeAtPath::Scalar(inner) => Some(inner.default_value()),
             TypeAtPath::Opaque(inner) => inner.default_value(),
         }
@@ -1454,6 +1497,7 @@ impl<'a> TypeAtPath<'a> {
             TypeAtPath::List(inner) => inner.has_default_value(),
             TypeAtPath::Array(inner) => inner.has_default_value(),
             TypeAtPath::Map(inner) => inner.has_default_value(),
+            TypeAtPath::Set(inner) => inner.has_default_value(),
             TypeAtPath::Scalar(inner) => inner.has_default_value(),
             TypeAtPath::Opaque(inner) => inner.has_default_value(),
         }
@@ -1469,6 +1513,7 @@ impl<'a> TypeAtPath<'a> {
             TypeAtPath::List(inner) => inner.type_name(),
             TypeAtPath::Array(inner) => inner.type_name(),
             TypeAtPath::Map(inner) => inner.type_name(),
+            TypeAtPath::Set(inner) => inner.type_name(),
             TypeAtPath::Scalar(inner) => inner.type_name(),
             TypeAtPath::Opaque(inner) => inner.type_name(),
         }
@@ -1530,6 +1575,13 @@ impl<'a> TypeAtPath<'a> {
         }
     }
 
+    pub fn as_set(self) -> Option<SetType<'a>> {
+        match self {
+            Self::Set(inner) => Some(inner),
+            _ => None,
+        }
+    }
+
     pub fn as_scalar(self) -> Option<ScalarType> {
         match self {
             Self::Scalar(inner) => Some(inner),
@@ -1571,6 +1623,7 @@ impl<'a> GetTypePath<'a> for TypeAtPath<'a> {
                     | TypeAtPath::List(_)
                     | TypeAtPath::Array(_)
                     | TypeAtPath::Map(_)
+                    | TypeAtPath::Set(_)
                     | TypeAtPath::Scalar(_)
                     | TypeAtPath::Opaque(_) => return None,
                 },
@@ -1593,6 +1646,7 @@ impl<'a> GetTypePath<'a> for TypeAtPath<'a> {
                     | TypeAtPath::List(_)
                     | TypeAtPath::Array(_)
                     | TypeAtPath::Map(_)
+                    | TypeAtPath::Set(_)
                     | TypeAtPath::Scalar(_)
                     | TypeAtPath::Opaque(_) => return None,
                 },
@@ -1618,6 +1672,7 @@ impl<'a> GetTypePath<'a> for TypeAtPath<'a> {
                     | TypeAtPath::Tuple(_)
                     | TypeAtPath::Enum(_)
                     | TypeAtPath::Variant(_)
+                    | TypeAtPath::Set(_)
                     | TypeAtPath::Scalar(_)
                     | TypeAtPath::Opaque(_) => return None,
                 },
@@ -1640,6 +1695,7 @@ impl<'a> GetTypePath<'a> for TypeAtPath<'a> {
                     | TypeAtPath::List(_)
                     | TypeAtPath::Array(_)
                     | TypeAtPath::Map(_)
+                    | TypeAtPath::Set(_)
                     | TypeAtPath::Scalar(_)
                     | TypeAtPath::Opaque(_) => return None,
                 },

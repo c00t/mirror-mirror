@@ -11,7 +11,6 @@
     clippy::needless_borrow,
     clippy::match_wildcard_for_single_variants,
     clippy::if_let_mutex,
-    clippy::mismatched_target_os,
     clippy::await_holding_lock,
     clippy::match_on_vec_items,
     clippy::imprecise_flops,
@@ -63,7 +62,7 @@ mod derive_reflect;
 ///     doc::some_module_name::Foo;
 /// }
 ///
-/// #[derive(Reflect, Clone, Debug)]
+/// #[derive(Reflect, Clone, Debug, Default)]
 /// struct Foo {
 ///     a: i32,
 ///     b: bool,
@@ -87,7 +86,7 @@ mod derive_reflect;
 ///     doc::some_module_name::Foo;
 /// }
 ///
-/// #[derive(Reflect, Clone, Debug)]
+/// #[derive(Reflect, Clone, Debug, Default)]
 /// struct Foo(i32, bool, String);
 /// # }
 /// ```
@@ -106,6 +105,7 @@ mod derive_reflect;
 /// }
 ///
 /// #[derive(Reflect, Clone, Debug)]
+/// #[reflect(opt_out(Default))]
 /// enum Foo {
 ///     A(i32),
 ///     B { b: bool },
@@ -118,8 +118,8 @@ mod derive_reflect;
 ///
 /// ## `opt_out`
 ///
-/// By default types are required to implement `Clone` and `Debug`. You can opt-out of these
-/// requirements with `#[reflect(opt_out(Clone, Debug))]`
+/// By default types are required to implement `Clone`, `Debug`, and `Default`. You can opt-out of these
+/// requirements with `#[reflect(opt_out(Clone, Debug, Default))]`
 ///
 /// ```
 /// # mod some_module_name {
@@ -131,7 +131,7 @@ mod derive_reflect;
 /// }
 ///
 /// #[derive(Reflect)]
-/// #[reflect(opt_out(Debug, Clone))]
+/// #[reflect(opt_out(Debug, Clone, Default))]
 /// struct Foo(i32);
 /// # }
 /// ```
@@ -146,7 +146,7 @@ mod derive_reflect;
 /// use mirror_mirror::{Reflect, FromReflect};
 /// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion};
 ///
-/// #[derive(Reflect, Debug, Clone)]
+/// #[derive(Reflect, Debug, Clone, Default)]
 /// #[reflect(opt_out(FromReflect))]
 /// struct Foo(i32);
 ///
@@ -181,16 +181,17 @@ mod derive_reflect;
 ///     doc::some_module_name::NotReflect;
 /// }
 ///
-/// #[derive(Reflect, Debug, Clone)]
+/// #[derive(Reflect, Debug, Clone, Default)]
 /// struct Foo {
 ///     #[reflect(skip)]
 ///     not_reflect: NotReflect,
 /// }
 ///
-/// #[derive(Reflect, Debug, Clone)]
+/// #[derive(Reflect, Debug, Clone, Default)]
 /// struct Bar(#[reflect(skip)] NotReflect);
 ///
 /// #[derive(Reflect, Debug, Clone)]
+/// #[reflect(opt_out(Default))]
 /// enum Baz {
 ///     #[reflect(skip)]
 ///     OnVariant(NotReflect),
@@ -224,7 +225,7 @@ mod derive_reflect;
 ///     doc::some_module_name::Foo;
 /// }
 ///
-/// #[derive(Reflect, Debug, Clone)]
+/// #[derive(Reflect, Debug, Clone, Default)]
 /// struct Foo {
 ///     #[reflect(from_reflect_with(n_from_reflect))]
 ///     n: i32,
@@ -263,7 +264,7 @@ mod derive_reflect;
 ///     doc::some_module_name::Foo;
 /// }
 ///
-/// #[derive(Reflect, Debug, Clone)]
+/// #[derive(Reflect, Debug, Clone, Default)]
 /// #[reflect(meta(
 ///     // a comma separated list of `key = value` pairs.
 ///     //
@@ -313,7 +314,7 @@ mod derive_reflect;
 ///     doc::some_module_name::Foo;
 /// }
 ///
-/// #[derive(Reflect, Debug, Clone)]
+/// #[derive(Reflect, Debug, Clone, Default)]
 /// #[reflect(crate_name(some_library))]
 /// struct Foo {
 ///     n: i32,

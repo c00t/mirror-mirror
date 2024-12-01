@@ -22,6 +22,7 @@ fn works() {
     }
 
     #[allow(dead_code)]
+    #[allow(dead_code)]
     struct Foo<'a, const N: usize>(&'a ());
 
     assert_eq!(simple_type_name::<String>(), "String");
@@ -51,6 +52,7 @@ fn works() {
     );
     // type names don't include lifetimes
     assert_eq!(simple_type_name::<Foo<'static, 10>>(), "Foo<10>");
+    assert_eq!(simple_type_name::<Box<dyn std::any::Any>>(), "Box<dyn Any>");
 }
 
 #[test]

@@ -1,6 +1,5 @@
 use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
-use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::any::Any;
@@ -9,7 +8,9 @@ use core::fmt;
 use core::hash::Hash;
 use core::hash::Hasher;
 use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use kollect::LinearSet;
 
+use kollect::LinearMap;
 use tiny_ordered_float::{OrderedF32, OrderedF64};
 
 use crate::enum_::EnumValue;
@@ -19,6 +20,7 @@ use crate::tuple_struct::TupleStructValue;
 use crate::type_info::graph::NodeId;
 use crate::type_info::graph::OpaqueNode;
 use crate::type_info::graph::TypeGraph;
+use crate::Array;
 use crate::DescribeType;
 use crate::FromReflect;
 use crate::Reflect;
@@ -28,7 +30,6 @@ use crate::ReflectRef;
 use crate::ScalarMut;
 use crate::ScalarOwned;
 use crate::ScalarRef;
-use crate::TypeDescriptor;
 
 /// A type erased value type.
 ///
@@ -59,7 +60,8 @@ pub enum Value {
     TupleStructValue(TupleStructValue),
     TupleValue(TupleValue),
     List(Vec<Value>),
-    Map(BTreeMap<Value, Value>),
+    Set(LinearSet<Value>),
+    Map(LinearMap<Value, Value>),
 }
 
 impl FromReflect for Value {
@@ -92,7 +94,8 @@ enum OrdEqHashValue<'a> {
     TupleStructValue(&'a TupleStructValue),
     TupleValue(&'a TupleValue),
     List(&'a [Value]),
-    Map(&'a BTreeMap<Value, Value>),
+    Set(&'a LinearSet<Value>),
+    Map(&'a LinearMap<Value, Value>),
 }
 
 impl<'a> From<&'a Value> for OrdEqHashValue<'a> {
@@ -119,6 +122,7 @@ impl<'a> From<&'a Value> for OrdEqHashValue<'a> {
             Value::TupleStructValue(inner) => OrdEqHashValue::TupleStructValue(inner),
             Value::TupleValue(inner) => OrdEqHashValue::TupleValue(inner),
             Value::List(inner) => OrdEqHashValue::List(inner),
+            Value::Set(inner) => OrdEqHashValue::Set(inner),
             Value::Map(inner) => OrdEqHashValue::Map(inner),
         }
     }
@@ -177,6 +181,7 @@ macro_rules! for_each_variant {
             Value::EnumValue($inner) => $expr,
             Value::TupleValue($inner) => $expr,
             Value::List($inner) => $expr,
+            Value::Set($inner) => $expr,
             Value::Map($inner) => $expr,
         }
     };
@@ -195,10 +200,6 @@ fixed_type_id! {
 }
 
 impl Reflect for Value {
-    fn type_descriptor(&self) -> alloc::borrow::Cow<'static, TypeDescriptor> {
-        <Self as DescribeType>::type_descriptor()
-    }
-
     fn as_any(&self) -> &dyn Any {
         for_each_variant!(self, inner => inner)
     }
@@ -207,12 +208,37 @@ impl Reflect for Value {
         for_each_variant!(self, inner => inner)
     }
 
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
+
     fn as_reflect(&self) -> &dyn Reflect {
         for_each_variant!(self, inner => inner)
     }
 
     fn as_reflect_mut(&mut self) -> &mut dyn Reflect {
         for_each_variant!(self, inner => inner)
+    }
+
+    fn as_array(&self) -> Option<&dyn Array> {
+        match self {
+            Value::List(list) => Some(list),
+            _ => None,
+        }
+    }
+
+    fn as_array_mut(&mut self) -> Option<&mut dyn Array> {
+        match self {
+            Value::List(list) => Some(list),
+            _ => None,
+        }
+    }
+
+    fn into_array(self: Box<Self>) -> Option<Box<dyn Array>> {
+        match *self {
+            Value::List(list) => Some(Box::new(list)),
+            _ => None,
+        }
     }
 
     fn reflect_owned(self: Box<Self>) -> ReflectOwned {
@@ -238,6 +264,7 @@ impl Reflect for Value {
             Value::TupleStructValue(inner) => ReflectOwned::TupleStruct(Box::new(inner)),
             Value::TupleValue(inner) => ReflectOwned::Tuple(Box::new(inner)),
             Value::List(inner) => ReflectOwned::List(Box::new(inner)),
+            Value::Set(inner) => ReflectOwned::Set(Box::new(inner)),
             Value::Map(inner) => ReflectOwned::Map(Box::new(inner)),
         }
     }
@@ -265,6 +292,7 @@ impl Reflect for Value {
             Value::TupleStructValue(inner) => ReflectRef::TupleStruct(inner),
             Value::TupleValue(inner) => ReflectRef::Tuple(inner),
             Value::List(inner) => ReflectRef::List(inner),
+            Value::Set(inner) => ReflectRef::Set(inner),
             Value::Map(inner) => ReflectRef::Map(inner),
         }
     }
@@ -292,6 +320,7 @@ impl Reflect for Value {
             Value::TupleStructValue(inner) => ReflectMut::TupleStruct(inner),
             Value::TupleValue(inner) => ReflectMut::Tuple(inner),
             Value::List(inner) => ReflectMut::List(inner),
+            Value::Set(inner) => ReflectMut::Set(inner),
             Value::Map(inner) => ReflectMut::Map(inner),
         }
     }

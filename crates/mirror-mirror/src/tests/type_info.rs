@@ -22,7 +22,7 @@ fn struct_() {
         mirror_mirror::tests::type_info::struct_::Foo;
     }
 
-    #[derive(Reflect, Clone, Debug)]
+    #[derive(Reflect, Clone, Debug, Default)]
     #[reflect(crate_name(crate))]
     struct Foo {
         n: i32,
@@ -80,7 +80,7 @@ fn enum_() {
     }
 
     #[derive(Reflect, Clone, Debug)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     enum Foo {
         A { a: String },
         B(Vec<Foo>),
@@ -94,7 +94,7 @@ fn complex_meta_type() {
         tests::type_info::complex_meta_type::Foo;
     }
 
-    #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
+    #[derive(Reflect, Clone, Debug, Default, PartialEq, Eq)]
     #[reflect(crate_name(crate), meta(a = Foo(1337)))]
     struct Foo(i32);
 
@@ -110,7 +110,7 @@ fn type_to_root() {
         mirror_mirror::tests::type_info::type_to_root::Foo;
     }
 
-    #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
+    #[derive(Reflect, Clone, Debug, Default, PartialEq, Eq)]
     #[reflect(crate_name(crate), meta(a = Foo(1337)))]
     struct Foo(i32);
 
@@ -136,11 +136,11 @@ fn two_types() {
         tests::type_info::two_types::Bar;
     }
 
-    #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
+    #[derive(Reflect, Clone, Debug, Default, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Foo(i32);
 
-    #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
+    #[derive(Reflect, Clone, Debug, Default, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Bar(bool);
 
@@ -190,7 +190,7 @@ fn how_to_handle_generics() {
     }
 
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
-    #[reflect(crate_name(crate), opt_out(Debug, Clone))]
+    #[reflect(crate_name(crate), opt_out(Debug, Clone, Default))]
     struct Foo<T>(T)
     where
         T: Reflect + FromReflect + DescribeType;
@@ -257,11 +257,11 @@ fn basic_eq() {
         tests::type_info::basic_eq::Bar;
     }
 
-    #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
+    #[derive(Reflect, Clone, Debug, Default, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Foo(i32);
 
-    #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
+    #[derive(Reflect, Clone, Debug, Default, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Bar {
         b: bool,
@@ -293,16 +293,18 @@ fn basic_hash() {
         tests::type_info::basic_hash::Bar;
     }
 
-    #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
+    #[derive(Reflect, Clone, Debug, Default, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Foo {
         a: i32,
     }
 
-    #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
+    #[derive(Reflect, Clone, Debug, Default, PartialEq, Eq)]
     #[reflect(crate_name(crate))]
     struct Bar {
         b: bool,
+        foo: Foo,
+        c: Vec<u32>,
     }
 
     let s = RandomState::new();
@@ -329,8 +331,19 @@ fn basic_hash() {
     assert_eq!(bar_hash, bar_hash_2);
 }
 
+// TODO: (@fu5ha) enable this with stable_hash and stable_eq functions
+/*
+// we should guarantee deterministic hash of `TypeDescriptor` stays static across compatible versions.
+// if we need to update this test, then we also likely need to release a new semver breaking version
 #[test]
-fn has_default_value() {
+fn basic_static_hash() {
+    use crate::STATIC_RANDOM_STATE;
+    #[derive(Reflect, Clone, Debug)]
+    #[reflect(crate_name(crate))]
+    struct Foo {
+        a: i32,
+    }
+
     fixed_type_id! {
         tests::type_info::has_default_value::A;
         tests::type_info::has_default_value::B;
@@ -339,11 +352,41 @@ fn has_default_value() {
 
     #[derive(Reflect, Clone, Debug)]
     #[reflect(crate_name(crate))]
+    struct Bar {
+        b: bool,
+        foo: Foo,
+        c: Vec<u32>,
+    }
+
+    let foo_desc = <Foo as DescribeType>::type_descriptor().into_owned();
+    let foo_hash = STATIC_RANDOM_STATE.hash_one(&foo_desc);
+
+    eprintln!("{:#?}", foo_desc);
+    assert_eq!(foo_hash, 2782098737032956938); // precomputed hash of Foo descriptor
+
+    let bar_desc = <Bar as DescribeType>::type_descriptor().into_owned();
+    let bar_hash = STATIC_RANDOM_STATE.hash_one(&bar_desc);
+
+    eprintln!("{:#?}", bar_desc);
+    assert_eq!(bar_hash, 3542944026927454911); // precomputed hash of Bar descriptor
+}
+*/
+
+#[test]
+fn has_default_value() {
+    fixed_type_id! {
+        tests::type_info::has_default_value::A;
+        tests::type_info::has_default_value::B;
+        tests::type_info::has_default_value::C;
+    }
+
+    #[derive(Reflect, Clone, Debug, Default)]
+    #[reflect(crate_name(crate))]
     struct A {
         a: String,
     }
 
-    #[derive(Reflect, Clone, Debug)]
+    #[derive(Reflect, Clone, Debug, Default)]
     #[reflect(crate_name(crate))]
     struct B(String);
 
@@ -351,6 +394,12 @@ fn has_default_value() {
     #[reflect(crate_name(crate))]
     enum C {
         C(i32),
+    }
+
+    impl Default for C {
+        fn default() -> Self {
+            Self::C(0)
+        }
     }
 
     assert!(<A as DescribeType>::type_descriptor().has_default_value());

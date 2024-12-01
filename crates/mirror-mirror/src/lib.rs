@@ -14,7 +14,7 @@
 //! fixed_type_id! {
 //!     doc::some_module_name::Foo;
 //! }
-//! #[derive(Reflect, Clone, Debug)]
+//! #[derive(Reflect, Clone, Debug, Default)]
 //! pub struct Foo {
 //!     pub x: i32,
 //! }
@@ -80,6 +80,7 @@
 //!     doc::some_module_name::Bar;
 //! }
 //! #[derive(Reflect, Clone, Debug)]
+//! #[reflect(opt_out(Default))]
 //! pub enum Bar {
 //!     X { x: i32 },
 //!     Y(String),
@@ -122,17 +123,17 @@
 //! }
 //!
 //! // Some complex nested data type.
-//! #[derive(Reflect, Clone, Debug)]
+//! #[derive(Reflect, Clone, Debug, Default)]
 //! pub struct User {
 //!     pub employer: Option<Company>,
 //! }
 //!
-//! #[derive(Reflect, Clone, Debug)]
+//! #[derive(Reflect, Clone, Debug, Default)]
 //! pub struct Company {
 //!     pub countries: Vec<Country>,
 //! }
 //!
-//! #[derive(Reflect, Clone, Debug)]
+//! #[derive(Reflect, Clone, Debug, Default)]
 //! pub struct Country {
 //!     pub name: String
 //! }
@@ -179,7 +180,7 @@
 //! fixed_type_id! {
 //!     doc::some_module_name::Foo;
 //! }
-//! #[derive(Reflect, Clone, Debug)]
+//! #[derive(Reflect, Clone, Debug, Default)]
 //! pub struct Foo(pub Vec<i32>);
 //!
 //! # }
@@ -201,7 +202,8 @@
 //!     .as_tuple_struct_mut()?
 //!     .field_at_mut(0)?
 //!     .as_list_mut()?
-//!     .push(&4);
+//!     .try_push(&4)
+//!     .unwrap();
 //!
 //! // Convert the `value` back into a `Foo`.
 //! let new_foo = Foo::from_reflect(&value)?;
@@ -223,7 +225,6 @@
 //! - Add meta data to types which becomes part of the type information.
 //! - [Key paths][mod@key_path] for querying value and type information.
 //! - No dependencies on [`bevy`] specific crates.
-//! - `#![no_std]` support.
 //!
 //! # Feature flags
 //!
@@ -233,7 +234,7 @@
 //!
 //! Name | Description | Default?
 //! ---|---|---
-//! `std` | Enables using the standard library (`core` and `alloc` are always required) | Yes
+//! `simple_type_name` | Enables support for intelligently simplifying type names when printing | Yes
 //! `speedy` | Enables [`speedy`] support for most types | Yes
 //! `serde` | Enables [`serde`] support for most types | Yes
 //! `glam` | Enables impls for [`glam`] | No
@@ -246,10 +247,8 @@
 //! [`glam`]: https://crates.io/crates/glam
 //! [`macaw`]: https://crates.io/crates/macaw
 
-#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
     clippy::all,
-    clippy::dbg_macro,
     clippy::todo,
     clippy::empty_enum,
     clippy::enum_glob_use,
@@ -260,7 +259,6 @@
     clippy::needless_borrow,
     clippy::match_wildcard_for_single_variants,
     clippy::if_let_mutex,
-    clippy::mismatched_target_os,
     clippy::await_holding_lock,
     clippy::match_on_vec_items,
     clippy::imprecise_flops,
@@ -292,15 +290,14 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 #![cfg_attr(test, allow(clippy::float_cmp))]
+#![cfg_attr(not(test), warn(clippy::dbg_macro))]
 
 extern crate alloc;
 
-use alloc::borrow::Cow;
 use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::string::String;
 use core::any::Any;
-use core::any::TypeId;
 use core::fmt;
 
 use crate::enum_::VariantField;
@@ -308,12 +305,6 @@ use crate::enum_::VariantKind;
 
 macro_rules! trivial_reflect_methods {
     () => {
-        fn type_descriptor(
-            &self,
-        ) -> alloc::borrow::Cow<'static, $crate::type_info::TypeDescriptor> {
-            <Self as $crate::type_info::DescribeType>::type_descriptor()
-        }
-
         fn as_any(&self) -> &dyn Any {
             self
         }
@@ -328,6 +319,99 @@ macro_rules! trivial_reflect_methods {
 
         fn as_reflect_mut(&mut self) -> &mut dyn Reflect {
             self
+        }
+
+        fn into_any(self: Box<Self>) -> Box<dyn Any> {
+            self
+        }
+    };
+}
+
+macro_rules! map_methods {
+    () => {
+        fn get(&self, key: &dyn Reflect) -> Option<&dyn Reflect> {
+            let key = K::from_reflect(key)?;
+            let value = Self::get(self, &key)?;
+            Some(value.as_reflect())
+        }
+
+        fn get_mut(&mut self, key: &dyn Reflect) -> Option<&mut dyn Reflect> {
+            let key = K::from_reflect(key)?;
+            let value = Self::get_mut(self, &key)?;
+            Some(value.as_reflect_mut())
+        }
+
+        fn try_insert<'a>(
+            &mut self,
+            key: &'a dyn Reflect,
+            value: &'a dyn Reflect,
+        ) -> Result<Option<Box<dyn Reflect>>, MapError> {
+            let (key, value) = crate::map::key_value_from_reflect(key, value)?;
+            if let Some(previous) = Self::insert(self, key, value) {
+                Ok(Some(Box::new(previous)))
+            } else {
+                Ok(None)
+            }
+        }
+
+        fn try_remove(&mut self, key: &dyn Reflect) -> Result<Option<Box<dyn Reflect>>, MapError> {
+            let key = K::from_reflect(key).ok_or(MapError::KeyFromReflectFailed)?;
+            if let Some(previous) = Self::remove(self, &key) {
+                Ok(Some(Box::new(previous)))
+            } else {
+                Ok(None)
+            }
+        }
+
+        fn len(&self) -> usize {
+            Self::len(self)
+        }
+
+        fn is_empty(&self) -> bool {
+            Self::is_empty(self)
+        }
+
+        fn iter(&self) -> crate::map::Iter<'_> {
+            let iter = Self::iter(self).map(|(key, value)| (key.as_reflect(), value.as_reflect()));
+            Box::new(iter)
+        }
+
+        fn iter_mut(&mut self) -> PairIterMut<'_, dyn Reflect> {
+            let iter =
+                Self::iter_mut(self).map(|(key, value)| (key.as_reflect(), value.as_reflect_mut()));
+            Box::new(iter)
+        }
+    };
+}
+
+macro_rules! set_methods {
+    () => {
+        fn len(&self) -> usize {
+            Self::len(self)
+        }
+
+        fn is_empty(&self) -> bool {
+            Self::is_empty(self)
+        }
+
+        fn try_insert(&mut self, element: &dyn Reflect) -> Result<bool, SetError> {
+            let element = V::from_reflect(element).ok_or(SetError)?;
+            Ok(self.insert(element))
+        }
+
+        fn try_remove(&mut self, element: &dyn Reflect) -> Result<bool, SetError> {
+            let element = V::from_reflect(element).ok_or(SetError)?;
+            Ok(self.remove(&element))
+        }
+
+        fn try_contains(&mut self, element: &dyn Reflect) -> Result<bool, SetError> {
+            let element = V::from_reflect(element).ok_or(SetError)?;
+            Ok(self.contains(&element))
+        }
+
+        fn iter(&self) -> Iter<'_> {
+            let iter = Self::iter(self).map(|element| element.as_reflect());
+            Box::new(iter)
         }
     };
 }
@@ -353,6 +437,9 @@ pub mod list;
 /// Reflected map types.
 pub mod map;
 
+/// Reflected set types.
+pub mod set;
+
 /// Reflected struct types.
 pub mod struct_;
 
@@ -375,7 +462,7 @@ mod reflect_eq;
 
 pub use reflect_eq::reflect_eq;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "simple_type_name")]
 #[cfg(test)]
 mod tests;
 
@@ -395,11 +482,15 @@ pub use self::list::List;
 #[doc(inline)]
 pub use self::map::Map;
 #[doc(inline)]
+pub use self::set::Set;
+#[doc(inline)]
 pub use self::struct_::Struct;
 #[doc(inline)]
 pub use self::tuple::Tuple;
 #[doc(inline)]
 pub use self::tuple_struct::TupleStruct;
+#[doc(inline)]
+pub use self::type_info::DefaultValue;
 #[doc(inline)]
 pub use self::type_info::DescribeType;
 #[doc(inline)]
@@ -416,11 +507,11 @@ pub(crate) static STATIC_RANDOM_STATE: ahash::RandomState = ahash::RandomState::
 
 /// A reflected type.
 pub trait Reflect: Any + Send + 'static {
-    fn type_descriptor(&self) -> Cow<'static, TypeDescriptor>;
-
     fn as_any(&self) -> &dyn Any;
 
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any>;
 
     fn as_reflect(&self) -> &dyn Reflect;
 
@@ -440,10 +531,35 @@ pub trait Reflect: Any + Send + 'static {
 
     fn debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
 
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<Self>()
-    }
-
+    /// Get the type name of the value.
+    ///
+    /// ```
+    /// use mirror_mirror::Reflect;
+    ///
+    /// fn dyn_reflect_type_name(value: &dyn Reflect) -> &str {
+    ///     value.type_name()
+    /// }
+    ///
+    /// assert_eq!(dyn_reflect_type_name(&1_i32), "i32");
+    /// ```
+    ///
+    /// Note that converting something into a [`Value`] will change what this method returns:
+    ///
+    /// ```
+    /// use mirror_mirror::Reflect;
+    ///
+    /// fn dyn_reflect_type_name(value: &dyn Reflect) -> &str {
+    ///     value.type_name()
+    /// }
+    ///
+    /// assert_eq!(
+    ///     dyn_reflect_type_name(&1_i32.to_value()),
+    ///     // the type name is no longer "i32"
+    ///     "mirror_mirror::value::Value",
+    /// );
+    /// ```
+    ///
+    /// If you want to keep the name of the original type use [`DescribeType::type_descriptor`].
     fn type_name(&self) -> &str {
         core::any::type_name::<Self>()
     }
@@ -530,6 +646,18 @@ pub trait Reflect: Any + Send + 'static {
 
     fn as_map_mut(&mut self) -> Option<&mut dyn Map> {
         self.reflect_mut().as_map_mut()
+    }
+
+    fn into_set(self: Box<Self>) -> Option<Box<dyn Set>> {
+        self.reflect_owned().into_set()
+    }
+
+    fn as_set(&self) -> Option<&dyn Set> {
+        self.reflect_ref().as_set()
+    }
+
+    fn as_set_mut(&mut self) -> Option<&mut dyn Set> {
+        self.reflect_mut().as_set_mut()
     }
 
     fn into_scalar(self: Box<Self>) -> Option<ScalarOwned> {
@@ -661,7 +789,7 @@ impl Reflect for String {
 
     fn patch(&mut self, value: &dyn Reflect) {
         if let Some(value) = value.as_any().downcast_ref::<Self>() {
-            *self = value.clone();
+            self.clone_from(value);
         }
     }
 
@@ -737,6 +865,7 @@ pub enum ReflectOwned {
     Array(Box<dyn Array>),
     List(Box<dyn List>),
     Map(Box<dyn Map>),
+    Set(Box<dyn Set>),
     Scalar(ScalarOwned),
     /// Not all `Reflect` implementations allow access to the underlying value. This variant can be
     /// used for such types.
@@ -753,6 +882,7 @@ impl ReflectOwned {
             ReflectOwned::Array(inner) => inner.as_reflect_mut(),
             ReflectOwned::List(inner) => inner.as_reflect_mut(),
             ReflectOwned::Map(inner) => inner.as_reflect_mut(),
+            ReflectOwned::Set(inner) => inner.as_reflect_mut(),
             ReflectOwned::Scalar(inner) => inner.as_reflect_mut(),
             ReflectOwned::Opaque(inner) => inner.as_reflect_mut(),
         }
@@ -767,6 +897,7 @@ impl ReflectOwned {
             ReflectOwned::Array(inner) => inner.as_reflect(),
             ReflectOwned::List(inner) => inner.as_reflect(),
             ReflectOwned::Map(inner) => inner.as_reflect(),
+            ReflectOwned::Set(inner) => inner.as_reflect(),
             ReflectOwned::Scalar(inner) => inner.as_reflect(),
             ReflectOwned::Opaque(inner) => inner.as_reflect(),
         }
@@ -821,6 +952,13 @@ impl ReflectOwned {
         }
     }
 
+    pub fn into_set(self) -> Option<Box<dyn Set>> {
+        match self {
+            Self::Set(inner) => Some(inner),
+            _ => None,
+        }
+    }
+
     pub fn into_scalar(self) -> Option<ScalarOwned> {
         match self {
             Self::Scalar(inner) => Some(inner),
@@ -846,6 +984,7 @@ impl Clone for ReflectOwned {
             Self::Array(inner) => inner.clone_reflect().reflect_owned(),
             Self::List(inner) => inner.clone_reflect().reflect_owned(),
             Self::Map(inner) => inner.clone_reflect().reflect_owned(),
+            Self::Set(inner) => inner.clone_reflect().reflect_owned(),
             Self::Opaque(inner) => inner.clone_reflect().reflect_owned(),
             Self::Scalar(inner) => Self::Scalar(inner.clone()),
         }
@@ -932,6 +1071,7 @@ pub enum ReflectRef<'a> {
     Array(&'a dyn Array),
     List(&'a dyn List),
     Map(&'a dyn Map),
+    Set(&'a dyn Set),
     Scalar(ScalarRef<'a>),
     /// Not all `Reflect` implementations allow access to the underlying value. This variant can be
     /// used for such types.
@@ -948,6 +1088,7 @@ impl<'a> ReflectRef<'a> {
             ReflectRef::Array(inner) => inner.as_reflect(),
             ReflectRef::List(inner) => inner.as_reflect(),
             ReflectRef::Map(inner) => inner.as_reflect(),
+            ReflectRef::Set(inner) => inner.as_reflect(),
             ReflectRef::Scalar(inner) => inner.as_reflect(),
             ReflectRef::Opaque(inner) => inner.as_reflect(),
         }
@@ -998,6 +1139,13 @@ impl<'a> ReflectRef<'a> {
     pub fn as_map(self) -> Option<&'a dyn Map> {
         match self {
             Self::Map(inner) => Some(inner),
+            _ => None,
+        }
+    }
+
+    pub fn as_set(self) -> Option<&'a dyn Set> {
+        match self {
+            Self::Set(inner) => Some(inner),
             _ => None,
         }
     }
@@ -1074,6 +1222,7 @@ pub enum ReflectMut<'a> {
     Array(&'a mut dyn Array),
     List(&'a mut dyn List),
     Map(&'a mut dyn Map),
+    Set(&'a mut dyn Set),
     Scalar(ScalarMut<'a>),
     /// Not all `Reflect` implementations allow mutable access to the underlying value (such as
     /// [`core::num::NonZeroU8`]). This variant can be used for such types.
@@ -1090,6 +1239,7 @@ impl<'a> ReflectMut<'a> {
             ReflectMut::Array(inner) => inner.as_reflect_mut(),
             ReflectMut::List(inner) => inner.as_reflect_mut(),
             ReflectMut::Map(inner) => inner.as_reflect_mut(),
+            ReflectMut::Set(inner) => inner.as_reflect_mut(),
             ReflectMut::Scalar(inner) => inner.as_reflect_mut(),
             ReflectMut::Opaque(inner) => inner.as_reflect_mut(),
         }
@@ -1104,6 +1254,7 @@ impl<'a> ReflectMut<'a> {
             ReflectMut::Array(inner) => inner.as_reflect(),
             ReflectMut::List(inner) => inner.as_reflect(),
             ReflectMut::Map(inner) => inner.as_reflect(),
+            ReflectMut::Set(inner) => inner.as_reflect(),
             ReflectMut::Scalar(inner) => inner.as_reflect(),
             ReflectMut::Opaque(inner) => inner.as_reflect(),
         }
@@ -1154,6 +1305,13 @@ impl<'a> ReflectMut<'a> {
     pub fn as_map_mut(self) -> Option<&'a mut dyn Map> {
         match self {
             Self::Map(inner) => Some(inner),
+            _ => None,
+        }
+    }
+
+    pub fn as_set_mut(self) -> Option<&'a mut dyn Set> {
+        match self {
+            Self::Set(inner) => Some(inner),
             _ => None,
         }
     }
@@ -1308,6 +1466,7 @@ pub fn reflect_debug(value: &dyn Reflect, f: &mut core::fmt::Formatter<'_>) -> c
         ReflectRef::Array(inner) => f.debug_list().entries(inner.iter()).finish(),
         ReflectRef::List(inner) => f.debug_list().entries(inner.iter()).finish(),
         ReflectRef::Map(inner) => f.debug_map().entries(inner.iter()).finish(),
+        ReflectRef::Set(inner) => f.debug_set().entries(inner.iter()).finish(),
         ReflectRef::Scalar(inner) => match inner {
             ScalarRef::usize(inner) => scalar_debug(&inner, f),
             ScalarRef::u8(inner) => scalar_debug(&inner, f),
@@ -1336,11 +1495,11 @@ pub fn reflect_debug(value: &dyn Reflect, f: &mut core::fmt::Formatter<'_>) -> c
 #[doc(hidden)]
 pub mod __private {
     pub use alloc::borrow::Cow;
-    pub use alloc::collections::BTreeMap;
     pub use core::any::Any;
     pub use core::any::TypeId;
     pub use core::fmt;
 
+    pub use kollect::LinearMap;
     pub use once_cell::race::OnceBox;
 
     pub use self::enum_::*;

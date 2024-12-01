@@ -61,7 +61,7 @@ fn static_enum() {
     }
 
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     enum Foo {
         Foo { foo: i32, bar: bool },
         Bar { baz: String },
@@ -134,7 +134,7 @@ fn patching() {
     }
 
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     enum Foo {
         A { a: i32 },
         B { b: bool },
@@ -214,7 +214,7 @@ fn static_tuple_enum() {
     }
 
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     enum Foo {
         A(i32, bool),
         B(String),
@@ -289,7 +289,7 @@ fn unit_variant() {
     }
 
     #[derive(Reflect, Clone, Debug, PartialEq, Eq)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     enum Foo {
         A,
         B,
@@ -419,14 +419,14 @@ fn from_reflect_with_value() {
     }
 
     #[derive(Debug, Clone, Reflect)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     pub enum Foo {
         Struct { number: Number },
         Tuple(Number),
     }
 
     #[derive(Debug, Clone, Reflect)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     pub enum Number {
         One,
         Two,
@@ -445,13 +445,52 @@ fn from_reflect_with_value() {
 }
 
 #[test]
+fn default_value() {
+    fixed_type_id! {
+        tests::enum_::default_value::Foo;
+        tests::enum_::default_value::Bar;
+    }
+
+    #[derive(Debug, Clone, Reflect, PartialEq)]
+    #[reflect(crate_name(crate))]
+    pub enum Foo {
+        A,
+        B(i32, String),
+    }
+
+    impl Default for Foo {
+        fn default() -> Self {
+            Foo::B(10, String::from("test"))
+        }
+    }
+
+    #[derive(Debug, Clone, Reflect, PartialEq)]
+    #[reflect(crate_name(crate), opt_out(Default))]
+    pub enum Bar {
+        A,
+        B(i32, String),
+    }
+
+    let foo_descriptor = <Foo as DescribeType>::type_descriptor();
+    let bar_descriptor = <Bar as DescribeType>::type_descriptor();
+
+    assert!(foo_descriptor.has_default_value());
+    assert!(!bar_descriptor.has_default_value());
+
+    let foo_default = Foo::default().to_value();
+
+    assert_eq!(foo_descriptor.default_value(), Some(foo_default));
+    assert_eq!(bar_descriptor.default_value(), None);
+}
+
+#[test]
 fn default_value_for_enum_variant_type() {
     fixed_type_id! {
         tests::enum_::default_value_for_enum_variant_type::Foo;
     }
 
     #[derive(Debug, Clone, Reflect, PartialEq)]
-    #[reflect(crate_name(crate))]
+    #[reflect(crate_name(crate), opt_out(Default))]
     pub enum Foo {
         A,
         B(i32, String),
@@ -495,5 +534,52 @@ fn default_value_for_enum_variant_type() {
         )
         .expect("from_reflect failed"),
         Foo::C { a: 0.0, b: None },
+    );
+}
+
+#[test]
+fn field_named_named() {
+    fixed_type_id! {
+        tests::enum_::field_named_named::A;
+    }
+
+    #[derive(Reflect, Debug, Clone)]
+    #[reflect(crate_name(crate), opt_out(Default))]
+    enum A {
+        Struct {
+            name: String,
+        },
+        // some other field names that shouldn't collide with generated code
+        Struct2 {
+            value: (),
+            reflect: (),
+            enum_: (),
+            struct_: (),
+        },
+    }
+
+    let mut a = A::Struct {
+        name: "foo".to_owned(),
+    };
+
+    assert_eq!(
+        a.as_reflect()
+            .as_enum()
+            .unwrap()
+            .field("name")
+            .unwrap()
+            .downcast_ref::<String>()
+            .unwrap(),
+        "foo"
+    );
+    assert_eq!(
+        a.as_reflect_mut()
+            .as_enum_mut()
+            .unwrap()
+            .field_mut("name")
+            .unwrap()
+            .downcast_mut::<String>()
+            .unwrap(),
+        "foo"
     );
 }
