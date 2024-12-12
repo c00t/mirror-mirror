@@ -20,8 +20,8 @@ syn = { version = "2.0.2", features = ["full", "parsing", "visit"] }
 
 [dev-dependencies]
 mirror-mirror = { path = "../mirror-mirror", version = "0.2", default-features = false }
-fixed-type-id = { path = "../../../../../../fixed-type-id/fixed_type_id" }
-# fixed-type-id = { version = "0.1.1" }
+# fixed-type-id = { path = "../../../../../../fixed-type-id/fixed_type_id" }
+fixed-type-id = { version = "0.1.2", features = ["kollect"] }
 
 [package.metadata.docs.rs]
 all-features = true

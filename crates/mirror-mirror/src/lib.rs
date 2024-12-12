@@ -324,6 +324,10 @@ macro_rules! trivial_reflect_methods {
         fn into_any(self: Box<Self>) -> Box<dyn Any> {
             self
         }
+
+        fn type_name(&self) -> &str {
+            fixed_type_id::type_name::<Self>()
+        }
     };
 }
 
@@ -560,9 +564,7 @@ pub trait Reflect: Any + Send + 'static {
     /// ```
     ///
     /// If you want to keep the name of the original type use [`DescribeType::type_descriptor`].
-    fn type_name(&self) -> &str {
-        core::any::type_name::<Self>()
-    }
+    fn type_name(&self) -> &str;
 
     fn into_tuple(self: Box<Self>) -> Option<Box<dyn Tuple>> {
         self.reflect_owned().into_tuple()

@@ -200,6 +200,10 @@ fixed_type_id! {
 }
 
 impl Reflect for Value {
+    fn type_name(&self) -> &str {
+        fixed_type_id::type_name::<Self>()
+    }
+
     fn as_any(&self) -> &dyn Any {
         for_each_variant!(self, inner => inner)
     }

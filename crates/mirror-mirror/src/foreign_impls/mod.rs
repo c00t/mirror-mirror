@@ -107,6 +107,10 @@ impl DefaultValue for Infallible {
 }
 
 impl Reflect for Infallible {
+    fn type_name(&self) -> &str {
+        fixed_type_id::type_name::<Self>()
+    }
+
     fn as_any(&self) -> &dyn Any {
         match *self {}
     }

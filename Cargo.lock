@@ -61,7 +61,9 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "fixed-type-id"
-version = "0.1.1"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad20b5f880527c1d26fa8a544e48febf216be99291cf6870febd7920131783cb"
 dependencies = [
  "fixed-type-id-macros",
  "fixedstr-ext",
@@ -75,6 +77,8 @@ dependencies = [
 [[package]]
 name = "fixed-type-id-macros"
 version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a31dda0e9ef97b8bda76c34d2312ecb46e1068797d56e8803bc4393c06c2bb5"
 dependencies = [
  "proc-macro2",
  "quote",

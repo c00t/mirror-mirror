@@ -26,6 +26,10 @@ impl<T> Reflect for Box<T>
 where
     T: Reflect + DescribeType,
 {
+    fn type_name(&self) -> &str {
+        fixed_type_id::type_name::<Self>()
+    }
+
     fn as_any(&self) -> &dyn Any {
         <T as Reflect>::as_any(self)
     }

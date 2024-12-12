@@ -43,8 +43,8 @@ speedy = { version = "0.8.5", optional = true }
 syn = { version = "2.0", features = ["full", "parsing"], optional = true }
 glam = { version = "0.29.2", optional = true }
 macaw = { version = "0.19", optional = true }
-fixed-type-id = { path = "../../../../../../fixed-type-id/fixed_type_id", features = ["kollect"] }
-# fixed-type-id = { version = "0.1.1", features = ["kollect"] }
+# fixed-type-id = { path = "../../../../../../fixed-type-id/fixed_type_id", features = ["kollect"] }
+fixed-type-id = { version = "0.1.2", features = ["kollect"] }
 
 [dev-dependencies]
 mirror-mirror-1 = { package = "mirror-mirror", version = "0.1" }

@@ -109,5 +109,9 @@ fn trivial_reflect_methods() -> TokenStream {
         fn into_any(self: Box<Self>) -> Box<dyn Any> {
             self
         }
+
+        fn type_name(&self) -> &str {
+            fixed_type_id::type_name::<Self>()
+        }
     }
 }
