@@ -111,7 +111,7 @@ fn trivial_reflect_methods() -> TokenStream {
         }
 
         fn type_name(&self) -> &str {
-            fixed_type_id::type_name::<Self>()
+            self::type_name::<Self>()
         }
     }
 }

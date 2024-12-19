@@ -7,7 +7,7 @@ use crate::type_info::TypeAtPath;
 use crate::DescribeType;
 use crate::Reflect;
 
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
 
 #[test]
 #[allow(clippy::bool_assert_comparison)]

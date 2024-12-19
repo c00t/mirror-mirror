@@ -210,7 +210,7 @@ macro_rules! impl_tuple {
             }
 
             fn debug(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                write!(f, "{}", core::any::type_name::<Self>())
+                write!(f, "{}", fixed_type_id::type_name::<Self>())
             }
 
             fn reflect_owned(self: Box<Self>) -> ReflectOwned {

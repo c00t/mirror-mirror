@@ -4,7 +4,7 @@ use crate::Reflect;
 use crate::ReflectMut;
 use crate::ReflectOwned;
 use crate::ReflectRef;
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
 
 #[test]
 fn from_default_tuple() {

@@ -55,6 +55,7 @@ use syn::{
 /// ```
 /// use mirror_mirror::type_info::SimpleTypeName;
 /// use core::fmt::Write;
+/// use fixed_type_id;
 ///
 /// let mut buf = String::new();
 /// match write!(&mut buf, "{}", SimpleTypeName::new_from_type::<fn() -> i32>()) {
@@ -67,7 +68,7 @@ use syn::{
 ///         //
 ///         // instead just write the type we get directly from the compiler
 ///         buf.clear();
-///         write!(&mut buf, "{}", core::any::type_name::<fn() -> i32>()).unwrap();
+///         write!(&mut buf, "{}", fixed_type_id::type_name::<fn() -> i32>()).unwrap();
 ///         # assert_eq!(buf, "fn() -> i32");
 ///     }
 /// }

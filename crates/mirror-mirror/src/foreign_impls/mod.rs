@@ -6,6 +6,7 @@ use core::ops::RangeTo;
 use core::ops::RangeToInclusive;
 
 use crate::__private::*;
+use fixed_type_id::type_name;
 use mirror_mirror_macros::__private_derive_reflect_foreign;
 
 mod array;

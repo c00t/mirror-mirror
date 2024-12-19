@@ -6,7 +6,7 @@ use crate::DescribeType;
 use crate::Enum;
 use crate::FromReflect;
 use crate::Reflect;
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
 
 #[test]
 fn enum_value() {

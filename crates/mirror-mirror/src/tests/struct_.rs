@@ -17,7 +17,7 @@ use crate::Reflect;
 use crate::Struct;
 use crate::Value;
 
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
 
 fixed_type_id! {
     tests::struct_::Foo;
@@ -380,7 +380,7 @@ fn deserialize_old_struct() {
     }
 
     mod v2 {
-        use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+        use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
 
         fixed_type_id! {
             tests::struct_::deserialize_old_struct::v2::Foo;

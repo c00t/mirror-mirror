@@ -13,7 +13,7 @@ mod tuple_struct;
 mod type_info;
 mod value;
 
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
 
 fixed_type_id! {
     tests::DebugOptOut;
@@ -37,7 +37,7 @@ mod complex_types {
 
     use crate::Reflect;
 
-    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+    use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
 
     fixed_type_id! {
         tests::complex_types::A;
@@ -146,8 +146,8 @@ mod derive_foreign {
     use crate::FromReflect;
 
     use fixed_type_id::{
-        fixed_type_id, fstr_to_str, implement_wrapper_fixed_type_id, ConstTypeName, FixedId,
-        FixedTypeId, FixedVersion,
+        fixed_type_id, fstr_to_str, implement_wrapper_fixed_type_id, type_name, ConstTypeName,
+        FixedId, FixedTypeId, FixedVersion,
     };
 
     enum Foo<A, B>

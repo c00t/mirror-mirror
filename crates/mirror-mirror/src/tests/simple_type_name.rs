@@ -3,7 +3,8 @@ use alloc::collections::BTreeMap;
 use crate::type_info::SimpleTypeName;
 
 use fixed_type_id::{
-    fixed_type_id, fstr_to_str, usize_to_str, ConstTypeName, FixedId, FixedTypeId, FixedVersion,
+    fixed_type_id, fstr_to_str, type_name, usize_to_str, ConstTypeName, FixedId, FixedTypeId,
+    FixedVersion,
 };
 
 fn simple_type_name<T: FixedTypeId>() -> String {
