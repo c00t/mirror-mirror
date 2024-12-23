@@ -67,9 +67,9 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "fixed-type-id"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f00292416067e098945bc9b424bcdb94ef790afb5164fc140c6fa4630e632e5"
+checksum = "6621a1208b9e8b325c36b2dd3560c17c70de36454d600acb386bd07b82a61c06"
 dependencies = [
  "either",
  "fixed-type-id-macros",
@@ -79,6 +79,7 @@ dependencies = [
  "macaw",
  "rapidhash",
  "semver",
+ "uuid",
 ]
 
 [[package]]
@@ -216,6 +217,7 @@ dependencies = [
  "speedy",
  "syn",
  "tiny-ordered-float",
+ "uuid",
 ]
 
 [[package]]
@@ -418,6 +420,12 @@ name = "unicode-ident"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adb9e6ca4f869e1180728b7950e35922a7fc6397f7b641499e8f3ef06e50dc83"
+
+[[package]]
+name = "uuid"
+version = "1.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8c5f0a0af699448548ad1a2fbf920fb4bee257eae39953ba95cb84891a0446a"
 
 [[package]]
 name = "version_check"

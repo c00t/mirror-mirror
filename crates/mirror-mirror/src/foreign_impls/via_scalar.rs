@@ -85,6 +85,8 @@ macro_rules! impl_reflect_via_scalar {
     };
 }
 
+pub(crate) use impl_reflect_via_scalar;
+
 impl_reflect_via_scalar! { NonZeroUsize, usize, |n: &NonZeroUsize| n.get(), Self::new }
 impl_reflect_via_scalar! { NonZeroU8,    u8,    |n: &NonZeroU8| n.get(),    Self::new }
 impl_reflect_via_scalar! { NonZeroU16,   u16,   |n: &NonZeroU16| n.get(),   Self::new }

@@ -22,6 +22,8 @@ mod via_scalar;
 mod glam;
 #[cfg(feature = "macaw")]
 mod macaw;
+#[cfg(feature = "uuid-1")]
+mod uuid;
 
 __private_derive_reflect_foreign! {
     #[reflect(opt_out(Clone, Debug), crate_name(crate))]
