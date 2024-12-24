@@ -4,7 +4,7 @@ use core::any::Any;
 use core::fmt;
 use core::fmt::Debug;
 use core::iter::FusedIterator;
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::prelude::*;
 
 use crate::iter::ValueIterMut;
 use crate::type_info::graph::NodeId;

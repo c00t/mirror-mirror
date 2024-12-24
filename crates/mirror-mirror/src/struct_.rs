@@ -3,7 +3,7 @@ use alloc::string::String;
 use core::any::Any;
 use core::fmt;
 
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::prelude::*;
 use kollect::LinearMap;
 
 use crate::iter::PairIterMut;

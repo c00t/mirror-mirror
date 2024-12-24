@@ -3,7 +3,7 @@ use alloc::boxed::Box;
 use alloc::string::String;
 use core::any::Any;
 use core::fmt;
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::prelude::*;
 
 use crate::iter::PairIterMut;
 use crate::iter::ValueIterMut;

@@ -8,7 +8,7 @@
 //! use mirror_mirror::{Reflect, Struct};
 //!
 //! # mod some_module_name {
-//! use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+//! use fixed_type_id::{prelude::*, type_name};
 //! # use mirror_mirror::{Reflect, Struct};
 //!
 //! fixed_type_id! {
@@ -75,7 +75,7 @@
 //! }
 //! # mod some_module_name {
 //! # use mirror_mirror::{Reflect, Struct, ReflectMut, ScalarMut, enum_::VariantFieldMut};
-//! use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+//! use fixed_type_id::{prelude::*, type_name};
 //! fixed_type_id! {
 //!     doc::some_module_name::Bar;
 //! }
@@ -113,7 +113,7 @@
 //!     type_info::{DescribeType, ScalarType},
 //! };
 //! # mod some_module_name {
-//! use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+//! use fixed_type_id::{prelude::*, type_name};
 //! # use mirror_mirror::{Reflect, key_path, key_path::{GetPath, GetTypePath, field}, type_info::{DescribeType, ScalarType}};
 //!
 //! fixed_type_id! {
@@ -174,7 +174,7 @@
 //! ```
 //! use mirror_mirror::{Reflect, Value, FromReflect};
 //! # mod some_module_name {
-//! use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+//! use fixed_type_id::{prelude::*, type_name};
 //! # use mirror_mirror::{Reflect, Value, FromReflect};
 //!
 //! fixed_type_id! {

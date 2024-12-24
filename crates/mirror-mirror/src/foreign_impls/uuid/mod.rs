@@ -1,6 +1,6 @@
 //! Fake implementation for [`uuid::Uuid`]
 
-use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{prelude::*, type_name};
 use kollect::LinearMap;
 use uuid::Uuid;
 

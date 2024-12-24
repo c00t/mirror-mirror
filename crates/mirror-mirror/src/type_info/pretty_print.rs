@@ -247,9 +247,7 @@ impl<'a> PrettyPrintRoot for OpaqueType<'a> {
 #[cfg(test)]
 mod tests {
     use core::time::Duration;
-    use fixed_type_id::{
-        fixed_type_id, fixed_type_id_without_version_hash, FixedId, FixedTypeId, FixedVersion,
-    };
+    use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
     use std::collections::HashMap;
 
     use alloc::collections::BTreeMap;

@@ -366,7 +366,7 @@ fn consistent_iteration_order_of_struct_variant_fields() {
 #[test]
 fn deserialize_old_struct() {
     mod v1 {
-        use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+        use fixed_type_id::{prelude::*, type_name};
 
         fixed_type_id! {
             tests::struct_::deserialize_old_struct::v1::Foo;
@@ -380,7 +380,7 @@ fn deserialize_old_struct() {
     }
 
     mod v2 {
-        use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
+        use fixed_type_id::{prelude::*, type_name};
 
         fixed_type_id! {
             tests::struct_::deserialize_old_struct::v2::Foo;

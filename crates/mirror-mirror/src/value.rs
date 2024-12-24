@@ -7,7 +7,7 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::hash::Hash;
 use core::hash::Hasher;
-use fixed_type_id::{fixed_type_id, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::prelude::*;
 use kollect::LinearSet;
 
 use kollect::LinearMap;

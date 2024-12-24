@@ -313,7 +313,7 @@ fn reflect_eq_map(a: &dyn Map, b: &dyn Map) -> Option<bool> {
 mod tests {
     use alloc::collections::BTreeMap;
 
-    use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
+    use fixed_type_id::{prelude::*, type_name};
 
     use crate::{
         enum_::EnumValue, struct_::StructValue, tuple::TupleValue, tuple_struct::TupleStructValue,

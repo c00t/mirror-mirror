@@ -158,7 +158,7 @@ mod tests {
     use alloc::collections::BTreeMap;
     use core::convert::Infallible;
 
-    use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
+    use fixed_type_id::{prelude::*, type_name};
 
     fixed_type_id! {
         Foo;
