@@ -3,7 +3,7 @@ use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec::Vec;
 // use core::any::type_name;
-use fixed_type_id::type_id;
+// use fixed_type_id::type_id;
 use fixed_type_id::type_name;
 use fixed_type_id::FixedTypeId;
 // use core::any::TypeId;
@@ -38,7 +38,7 @@ impl NodeId {
 
         // let mut hasher = STATIC_RANDOM_STATE.build_hasher();
         // TypeId::of::<T>().hash(&mut hasher);
-        Self(type_id::<T>().as_u64())
+        Self(FixedId::from_type_name(T::TYPE_NAME, Some(T::TYPE_VERSION)).as_u64())
     }
 }
 

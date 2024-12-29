@@ -1,6 +1,6 @@
 // use core::any::type_name;
 use core::iter::Peekable;
-use fixed_type_id::{type_id, type_name, FixedId, FixedTypeId};
+use fixed_type_id::{type_name, FixedId, FixedTypeId};
 
 use alloc::borrow::Cow;
 use alloc::boxed::Box;
@@ -50,7 +50,7 @@ pub trait DescribeType: 'static + FixedTypeId {
             RwLock<HashMap<FixedId, &'static TypeDescriptor, ahash::RandomState>>,
         > = OnceBox::new();
 
-        let type_id = type_id::<Self>();
+        let type_id = FixedId::from_type_name(Self::TYPE_NAME, Some(Self::TYPE_VERSION));
 
         let lock = INFO.get_or_init(|| {
             Box::from(RwLock::new(HashMap::with_hasher(
