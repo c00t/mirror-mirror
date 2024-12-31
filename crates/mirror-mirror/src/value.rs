@@ -204,6 +204,10 @@ impl Reflect for Value {
         fixed_type_id::type_name::<Self>()
     }
 
+    fn type_id(&self) -> fixed_type_id::FixedId {
+        fixed_type_id::type_id::<Self>()
+    }
+
     fn as_any(&self) -> &dyn Any {
         for_each_variant!(self, inner => inner)
     }

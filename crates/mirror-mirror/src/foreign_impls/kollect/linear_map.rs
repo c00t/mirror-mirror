@@ -17,6 +17,8 @@ use crate::ReflectOwned;
 use crate::ReflectRef;
 use crate::Value;
 
+use fixed_type_id::{prelude::*, type_name, type_id};
+
 impl<K, V> Reflect for LinearMap<K, V>
 where
     K: FromReflect + DescribeType + Eq,

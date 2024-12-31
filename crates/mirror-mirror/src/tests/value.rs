@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{DescribeType, FromReflect, Reflect};
 
-use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{fixed_type_id, type_name, type_id, FixedId, FixedTypeId, FixedVersion};
 
 #[test]
 fn option_uses_none_as_default() {

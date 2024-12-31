@@ -1,6 +1,6 @@
 //! Fake implementation for [`uuid::Uuid`]
 
-use fixed_type_id::{prelude::*, type_name};
+use fixed_type_id::{prelude::*, type_name, type_id};
 use kollect::LinearMap;
 use uuid::Uuid;
 
@@ -54,6 +54,9 @@ impl Reflect for Uuid {
     }
     fn type_name(&self) -> &str {
         self::type_name::<Self>()
+    }
+    fn type_id(&self) -> self::FixedId {
+        self::type_id::<Self>()
     }
     fn patch(&mut self, value: &dyn Reflect) {
         if let Some(tuple_struct) = value.reflect_ref().as_tuple_struct() {

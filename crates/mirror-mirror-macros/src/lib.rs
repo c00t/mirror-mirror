@@ -56,7 +56,7 @@ mod derive_reflect;
 /// ```
 /// # mod some_module_name {
 /// use mirror_mirror::Reflect;
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 ///
 /// fixed_type_id! {
 ///     doc::some_module_name::Foo;
@@ -80,7 +80,7 @@ mod derive_reflect;
 /// ```
 /// # mod some_module_name {
 /// use mirror_mirror::Reflect;
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 ///
 /// fixed_type_id! {
 ///     doc::some_module_name::Foo;
@@ -98,7 +98,7 @@ mod derive_reflect;
 /// ```
 /// # mod some_module_name {
 /// use mirror_mirror::Reflect;
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 ///
 /// fixed_type_id! {
 ///     doc::some_module_name::Foo;
@@ -124,7 +124,7 @@ mod derive_reflect;
 /// ```
 /// # mod some_module_name {
 /// use mirror_mirror::Reflect;
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 ///
 /// fixed_type_id! {
 ///     doc::some_module_name::Foo;
@@ -144,7 +144,7 @@ mod derive_reflect;
 /// ```
 /// # mod some_module_name {
 /// use mirror_mirror::{Reflect, FromReflect};
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 ///
 /// #[derive(Reflect, Debug, Clone, Default)]
 /// #[reflect(opt_out(FromReflect))]
@@ -171,7 +171,7 @@ mod derive_reflect;
 /// use mirror_mirror::{Reflect, FromReflect};
 ///
 /// # mod some_module_name {
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 /// # use mirror_mirror::{Reflect, FromReflect};
 ///
 /// fixed_type_id! {
@@ -219,7 +219,7 @@ mod derive_reflect;
 /// ```
 /// # mod some_module_name {
 /// use mirror_mirror::{Reflect, FromReflect};
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 ///
 /// fixed_type_id! {
 ///     doc::some_module_name::Foo;
@@ -251,7 +251,7 @@ mod derive_reflect;
 /// };
 ///
 /// # mod some_module_name {
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 /// # use mirror_mirror::{
 /// #     Reflect,
 /// #     key_path,
@@ -308,7 +308,7 @@ mod derive_reflect;
 /// # mod some_module_name {
 /// # use mirror_mirror as some_library;
 /// use some_library::Reflect;
-/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name};
+/// use fixed_type_id::{fixed_type_id, FixedTypeId, FixedId, FixedVersion, type_name, type_id};
 ///
 /// fixed_type_id! {
 ///     doc::some_module_name::Foo;

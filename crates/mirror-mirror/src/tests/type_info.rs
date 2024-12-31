@@ -13,7 +13,7 @@ use crate::FromReflect;
 use crate::Reflect;
 use crate::Value;
 
-use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{fixed_type_id, type_name, type_id, FixedId, FixedTypeId, FixedVersion};
 
 #[test]
 fn struct_() {

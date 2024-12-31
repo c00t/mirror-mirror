@@ -17,7 +17,7 @@ use crate::Reflect;
 use crate::Struct;
 use crate::Value;
 
-use fixed_type_id::{fixed_type_id, type_name, FixedId, FixedTypeId, FixedVersion};
+use fixed_type_id::{fixed_type_id, type_name, type_id, FixedId, FixedTypeId, FixedVersion};
 
 fixed_type_id! {
     tests::struct_::Foo;
@@ -366,7 +366,7 @@ fn consistent_iteration_order_of_struct_variant_fields() {
 #[test]
 fn deserialize_old_struct() {
     mod v1 {
-        use fixed_type_id::{prelude::*, type_name};
+        use fixed_type_id::{prelude::*, type_name, type_id};
 
         fixed_type_id! {
             tests::struct_::deserialize_old_struct::v1::Foo;
@@ -380,7 +380,7 @@ fn deserialize_old_struct() {
     }
 
     mod v2 {
-        use fixed_type_id::{prelude::*, type_name};
+        use fixed_type_id::{prelude::*, type_name, type_id};
 
         fixed_type_id! {
             tests::struct_::deserialize_old_struct::v2::Foo;

@@ -113,5 +113,9 @@ fn trivial_reflect_methods() -> TokenStream {
         fn type_name(&self) -> &str {
             self::type_name::<Self>()
         }
+
+        fn type_id(&self) -> self::FixedId {
+            self::type_id::<Self>()
+        }
     }
 }

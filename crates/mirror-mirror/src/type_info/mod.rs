@@ -1,5 +1,6 @@
 // use core::any::type_name;
 use core::iter::Peekable;
+use fixed_type_id::{type_id, type_version, FixedVersion};
 use fixed_type_id::{type_name, FixedId, FixedTypeId};
 
 use alloc::borrow::Cow;
@@ -47,22 +48,23 @@ pub trait DescribeType: 'static + FixedTypeId {
 
         // amortizing creation of type descriptors so that each process only needs to compute a type descriptor for each type once
         static INFO: OnceBox<
-            RwLock<HashMap<FixedId, &'static TypeDescriptor, ahash::RandomState>>,
+            RwLock<HashMap<(FixedId, FixedVersion), &'static TypeDescriptor, ahash::RandomState>>,
         > = OnceBox::new();
 
-        let type_id = FixedId::from_type_name(Self::TYPE_NAME, Some(Self::TYPE_VERSION));
+        let type_id = type_id::<Self>();
+        let type_version = type_version::<Self>();
 
         let lock = INFO.get_or_init(|| {
             Box::from(RwLock::new(HashMap::with_hasher(
                 STATIC_RANDOM_STATE.clone(),
             ))) // use seeded random state
         });
-        if let Some(info) = lock.read().unwrap().get(&type_id) {
+        if let Some(info) = lock.read().unwrap().get(&(type_id, type_version)) {
             return Cow::Borrowed(info);
         }
 
         let mut map = lock.write().unwrap();
-        let info = map.entry(type_id).or_insert_with(|| {
+        let info = map.entry((type_id, type_version)).or_insert_with(|| {
             let mut graph = TypeGraph::default();
             let id = Self::build(&mut graph);
             let info = TypeDescriptor::new(id, graph);

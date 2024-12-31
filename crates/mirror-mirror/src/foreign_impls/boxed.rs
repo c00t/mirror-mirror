@@ -30,6 +30,10 @@ where
         fixed_type_id::type_name::<Self>()
     }
 
+    fn type_id(&self) -> fixed_type_id::FixedId {
+        fixed_type_id::type_id::<Self>()
+    }
+
     fn as_any(&self) -> &dyn Any {
         <T as Reflect>::as_any(self)
     }

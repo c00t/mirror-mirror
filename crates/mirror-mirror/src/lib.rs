@@ -8,7 +8,7 @@
 //! use mirror_mirror::{Reflect, Struct};
 //!
 //! # mod some_module_name {
-//! use fixed_type_id::{prelude::*, type_name};
+//! use fixed_type_id::{prelude::*, type_name, type_id};
 //! # use mirror_mirror::{Reflect, Struct};
 //!
 //! fixed_type_id! {
@@ -75,7 +75,7 @@
 //! }
 //! # mod some_module_name {
 //! # use mirror_mirror::{Reflect, Struct, ReflectMut, ScalarMut, enum_::VariantFieldMut};
-//! use fixed_type_id::{prelude::*, type_name};
+//! use fixed_type_id::{prelude::*, type_name, type_id};
 //! fixed_type_id! {
 //!     doc::some_module_name::Bar;
 //! }
@@ -113,7 +113,7 @@
 //!     type_info::{DescribeType, ScalarType},
 //! };
 //! # mod some_module_name {
-//! use fixed_type_id::{prelude::*, type_name};
+//! use fixed_type_id::{prelude::*, type_name, type_id};
 //! # use mirror_mirror::{Reflect, key_path, key_path::{GetPath, GetTypePath, field}, type_info::{DescribeType, ScalarType}};
 //!
 //! fixed_type_id! {
@@ -174,7 +174,7 @@
 //! ```
 //! use mirror_mirror::{Reflect, Value, FromReflect};
 //! # mod some_module_name {
-//! use fixed_type_id::{prelude::*, type_name};
+//! use fixed_type_id::{prelude::*, type_name, type_id};
 //! # use mirror_mirror::{Reflect, Value, FromReflect};
 //!
 //! fixed_type_id! {
@@ -327,6 +327,10 @@ macro_rules! trivial_reflect_methods {
 
         fn type_name(&self) -> &str {
             fixed_type_id::type_name::<Self>()
+        }
+
+        fn type_id(&self) -> fixed_type_id::FixedId {
+            fixed_type_id::type_id::<Self>()
         }
     };
 }
@@ -502,6 +506,8 @@ pub use self::type_info::TypeDescriptor;
 #[doc(inline)]
 pub use self::value::Value;
 
+use fixed_type_id::FixedId;
+
 pub(crate) static STATIC_RANDOM_STATE: ahash::RandomState = ahash::RandomState::with_seeds(
     0x86c11a44c63f4f2f,
     0xaf04d821054d02b3,
@@ -565,6 +571,8 @@ pub trait Reflect: Any + Send + 'static {
     ///
     /// If you want to keep the name of the original type use [`DescribeType::type_descriptor`].
     fn type_name(&self) -> &str;
+
+    fn type_id(&self) -> FixedId;
 
     fn into_tuple(self: Box<Self>) -> Option<Box<dyn Tuple>> {
         self.reflect_owned().into_tuple()

@@ -13,7 +13,7 @@ mod tuple_struct;
 mod type_info;
 mod value;
 
-use fixed_type_id::{prelude::*, type_name};
+use fixed_type_id::{prelude::*, type_name, type_id};
 
 fixed_type_id! {
     tests::DebugOptOut;
@@ -37,7 +37,7 @@ mod complex_types {
 
     use crate::Reflect;
 
-    use fixed_type_id::{prelude::*, type_name};
+    use fixed_type_id::{prelude::*, type_name, type_id};
 
     fixed_type_id! {
         tests::complex_types::A;
@@ -75,7 +75,7 @@ mod skip {
 
     use super::*;
 
-    use fixed_type_id::{prelude::*, type_name};
+    use fixed_type_id::{prelude::*, type_name, type_id};
 
     fixed_type_id! {
         tests::skip::TestStruct;
@@ -123,7 +123,7 @@ mod option_f32 {
 
     use super::*;
 
-    use fixed_type_id::{prelude::*, type_name};
+    use fixed_type_id::{prelude::*, type_name, type_id};
 
     fixed_type_id! {
         tests::option_f32::Foo;
@@ -146,7 +146,7 @@ mod derive_foreign {
     use crate::FromReflect;
 
     use fixed_type_id::{
-        fixed_type_id, fstr_to_str, type_name, ConstTypeName, FixedId, FixedTypeId, FixedVersion,
+        fixed_type_id, fstr_to_str, type_name, type_id, ConstTypeName, FixedId, FixedTypeId, FixedVersion,
     };
 
     enum Foo<A, B>
@@ -293,7 +293,7 @@ mod from_reflect_opt_out {
     use super::*;
     use crate::FromReflect;
 
-    use fixed_type_id::{prelude::*, type_name};
+    use fixed_type_id::{prelude::*, type_name, type_id};
 
     fixed_type_id! {
         tests::from_reflect_opt_out::Percentage;
@@ -368,7 +368,7 @@ mod from_reflect_with {
     use super::*;
     use crate::FromReflect;
 
-    use fixed_type_id::{prelude::*, type_name};
+    use fixed_type_id::{prelude::*, type_name, type_id};
 
     fixed_type_id! {
         tests::from_reflect_with::A;

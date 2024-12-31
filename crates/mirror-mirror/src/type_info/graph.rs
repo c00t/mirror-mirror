@@ -3,9 +3,11 @@ use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec::Vec;
 // use core::any::type_name;
-// use fixed_type_id::type_id;
-use fixed_type_id::type_name;
+use fixed_type_id::type_id;
+use fixed_type_id::type_version;
 use fixed_type_id::FixedTypeId;
+use fixed_type_id::FixedVersion;
+use std::hash::BuildHasher;
 // use core::any::TypeId;
 use core::hash::Hash;
 use core::hash::Hasher;
@@ -33,12 +35,18 @@ impl NodeId {
     where
         T: 'static + FixedTypeId,
     {
-        // use core::hash::Hash;
-        // use core::hash::Hasher;
+        use core::hash::Hash;
+        use core::hash::Hasher;
 
-        // let mut hasher = STATIC_RANDOM_STATE.build_hasher();
-        // TypeId::of::<T>().hash(&mut hasher);
-        Self(FixedId::from_type_name(T::TYPE_NAME, Some(T::TYPE_VERSION)).as_u64())
+        let mut hasher = STATIC_RANDOM_STATE.build_hasher();
+        (type_id::<T>(), type_version::<T>()).hash(&mut hasher);
+        Self(hasher.finish())
+    }
+
+    pub fn from_fixed_tag(id: FixedId, version: FixedVersion) -> Self {
+        let mut hasher = STATIC_RANDOM_STATE.build_hasher();
+        (id, version).hash(&mut hasher);
+        Self(hasher.finish())
     }
 }
 
@@ -77,7 +85,7 @@ impl Hash for TypeGraph {
 }
 
 impl TypeGraph {
-    pub(super) fn get(&self, id: NodeId) -> &TypeNode {
+    pub fn get(&self, id: NodeId) -> &TypeNode {
         const ERROR: &str = "no node found in graph. This is a bug. Please open an issue.";
         self.map.get(&id).expect(ERROR).as_ref().expect(ERROR)
     }

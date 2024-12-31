@@ -6,7 +6,7 @@ use core::ops::RangeTo;
 use core::ops::RangeToInclusive;
 
 use crate::__private::*;
-use fixed_type_id::type_name;
+use fixed_type_id::{type_name,type_id};
 use mirror_mirror_macros::__private_derive_reflect_foreign;
 
 mod array;
@@ -112,6 +112,10 @@ impl DefaultValue for Infallible {
 impl Reflect for Infallible {
     fn type_name(&self) -> &str {
         fixed_type_id::type_name::<Self>()
+    }
+
+    fn type_id(&self) -> fixed_type_id::FixedId {
+        fixed_type_id::type_id::<Self>()
     }
 
     fn as_any(&self) -> &dyn Any {

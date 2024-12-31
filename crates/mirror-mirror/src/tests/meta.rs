@@ -2,7 +2,7 @@ use crate::type_info::GetMeta;
 use crate::DescribeType;
 use crate::Reflect;
 
-use fixed_type_id::{prelude::*, type_name};
+use fixed_type_id::{prelude::*, type_name, type_id};
 
 #[test]
 fn works() {
